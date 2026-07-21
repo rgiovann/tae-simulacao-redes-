@@ -26,6 +26,7 @@
       @keyframes flow { to { stroke-dashoffset:-38; } }
       .node { filter:drop-shadow(0 4px 5px rgba(15,45,78,.14)); } .node .circle { fill:#fff; stroke-width:3; } .node.fast .circle { stroke:var(--cyan); } .node.slow .circle { stroke:var(--slow); }
       .node text { font-size:12px; font-weight:800; fill:#31506e; text-anchor:middle; } .endpoint text { font-size:14px; fill:#18385a; text-anchor:middle; }
+      .node.congested .circle { fill:#fee2e2; stroke:#ef4444; animation:congestion-pulse .8s ease-in-out infinite; } .node.congested text { fill:#b91c1c; } .congestion-badge { display:none; } .congestion-badge.visible { display:block; } .congestion-badge rect { fill:#dc2626; } .congestion-badge text { fill:#fff; font-size:10px; font-weight:800; text-anchor:middle; } @keyframes congestion-pulse { 50% { filter:drop-shadow(0 0 7px rgba(239,68,68,.75)); } }
       .endpoint .endpoint-bg { fill:#fff; stroke:#cfe0ef; stroke-width:2; } .endpoint.server .endpoint-bg { stroke:#22c55e; } .endpoint.client .endpoint-bg { stroke:#818cf8; }
       .device-icon { fill:none; stroke:#31506e; stroke-width:2.3; stroke-linecap:round; stroke-linejoin:round; } .server .device-icon { stroke:#16a34a; } .client .device-icon { stroke:#4f46e5; }
       .cloud-title { font-size:13px; font-weight:800; fill:#0369a1; letter-spacing:.08em; text-anchor:middle; }
@@ -59,7 +60,7 @@
           <path id="fastPath" class="route fast" d="M130 192 C205 155 230 145 283 153 S385 176 438 160 S529 132 602 183 S697 212 793 192" />
           <path id="slowPath" class="route slow" d="M130 198 C195 259 238 271 293 252 S388 230 433 267 S530 299 575 246 S685 242 793 198" />
           <text x="431" y="133" class="route-label fast">rota rápida · 3 saltos</text><text x="439" y="308" class="route-label slow">rota alternativa · 4 saltos</text>
-          <g class="node fast"><circle class="circle" cx="278" cy="153" r="19"/><text x="278" y="157">R1</text></g><g class="node fast"><circle class="circle" cx="438" cy="160" r="19"/><text x="438" y="164">R2</text></g><g class="node fast"><circle class="circle" cx="603" cy="183" r="19"/><text x="603" y="187">R3</text></g>
+          <g class="node fast"><circle class="circle" cx="278" cy="153" r="19"/><text x="278" y="157">R1</text></g><g id="r2" class="node fast"><circle class="circle" cx="438" cy="160" r="19"/><text x="438" y="164">R2</text></g><g id="r2-warning" class="congestion-badge"><rect x="398" y="187" width="80" height="20" rx="10"/><text x="438" y="201">FILA</text></g><g class="node fast"><circle class="circle" cx="603" cy="183" r="19"/><text x="603" y="187">R3</text></g>
           <g class="node slow"><circle class="circle" cx="292" cy="252" r="19"/><text x="292" y="256">R4</text></g><g class="node slow"><circle class="circle" cx="433" cy="267" r="19"/><text x="433" y="271">R5</text></g><g class="node slow"><circle class="circle" cx="575" cy="246" r="19"/><text x="575" y="250">R6</text></g><g class="node slow"><circle class="circle" cx="682" cy="241" r="19"/><text x="682" y="245">R7</text></g>
           <g class="endpoint server"><rect class="endpoint-bg" x="28" y="147" width="110" height="96" rx="18"/><g class="device-icon"><rect x="70" y="164" width="26" height="29" rx="3"/><path d="M70 174h26M70 184h26M77 169h.1M77 179h.1M77 189h.1"/></g><text x="83" y="213">Data Center</text><text x="83" y="231" style="font-size:11px;font-weight:600;fill:#60728a">Servidor</text></g>
           <g class="endpoint client"><rect class="endpoint-bg" x="790" y="147" width="104" height="96" rx="18"/><g class="device-icon"><rect x="831" y="160" width="22" height="35" rx="4"/><path d="M839 190h6"/></g><text x="842" y="213">Seu iPad</text><text x="842" y="231" style="font-size:11px;font-weight:600;fill:#60728a">Usuário</text></g>
@@ -85,6 +86,8 @@
       const btn = document.getElementById('btn');
       const status = document.getElementById('status');
       const paths = { fast: document.getElementById('fastPath'), slow: document.getElementById('slowPath') };
+      const r2 = document.getElementById('r2');
+      const r2Warning = document.getElementById('r2-warning');
       let animationFrame;
       function positionPacket(packet, path, progress) { const point = path.getPointAtLength(path.getTotalLength() * progress); packet.setAttribute('transform', `translate(${point.x} ${point.y})`); }
       function reset() { cancelAnimationFrame(animationFrame); document.querySelectorAll('.packet').forEach(packet => { packet.classList.remove('visible'); packet.removeAttribute('transform'); }); document.querySelectorAll('.route').forEach(path => path.classList.remove('active')); ['s1','s2','s3'].forEach(id => { const slot = document.getElementById(id); slot.textContent = '—'; slot.className = 'slot'; }); }
@@ -116,6 +119,8 @@
         runFrames = [];
         document.querySelectorAll('.packet').forEach(packet => { packet.classList.remove('visible'); packet.removeAttribute('transform'); });
         document.querySelectorAll('.route').forEach(path => path.classList.remove('active'));
+        r2.classList.remove('congested');
+        r2Warning.classList.remove('visible');
         ['s1', 's2', 's3'].forEach(id => { const slot = document.getElementById(id); slot.className = 'slot'; slot.textContent = 'Vazio'; });
         reconstruction.classList.remove('show');
         ['P1', 'P2', 'P3'].forEach(packet => updatePacketCard(packet, 'Aguardando saída', ''));
@@ -246,7 +251,17 @@
           sendPacket('P1', 'slow', 1400, 5200, 'P1 segue pela rota alternativa, com quatro saltos.');
           sendPacket('P3', 'slow', 2400, 6100, 'P3 também segue pela rota alternativa.');
         } else if (selectedScenario === 'congestion') {
-          sendPacket('P2', 'fast', 700, 7800, 'P2 está na rota rápida, mas encontrou congestionamento.');
+          animatePacketSegment('p2', 'fast', 700, 1600, 0, .466, () => { updatePacketCard('P2', 'Em trânsito pela rota rápida', 'moving'); status.textContent = 'P2 segue pela rota rápida até o R2.'; }, () => {
+            r2.classList.add('congested');
+            r2Warning.classList.add('visible');
+            updatePacketCard('P2', 'Aguardando na fila do R2', 'moving');
+            status.textContent = 'R2 está congestionado: P2 precisa aguardar na fila antes de continuar.';
+            schedule(() => {
+              r2.classList.remove('congested');
+              r2Warning.classList.remove('visible');
+              animatePacketSegment('p2', 'fast', 0, 4200, .466, 1, () => { updatePacketCard('P2', 'Saiu da fila e segue para R3', 'moving'); status.textContent = 'A fila diminuiu: P2 saiu do R2 e continua seu percurso.'; }, () => arrived('P2'));
+            }, 2200);
+          });
           sendPacket('P1', 'slow', 1400, 4700, 'P1 segue pela rota alternativa, que está livre.');
           sendPacket('P3', 'slow', 2400, 5700, 'P3 também segue pela rota alternativa.');
         } else {
