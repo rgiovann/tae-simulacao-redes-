@@ -4,414 +4,83 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Simulador: Download de Imagem por Pacotes</title>
-
-    <!-- FontAwesomeCDN para ícones vetoriais modernos -->
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
-    />
-
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <style>
-      body {
-        font-family:
-          system-ui,
-          -apple-system,
-          sans-serif;
-        background: #f8fafc;
-        padding: 20px;
-        text-align: center;
-        color: #1e293b;
-      }
-      .card {
-        background: white;
-        padding: 28px;
-        border-radius: 20px;
-        max-width: 760px;
-        margin: 0 auto;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-      }
-
-      /* Layout Geral em Grid */
-      .network-container {
-        display: grid;
-        grid-template-columns: 120px 1fr 120px;
-        gap: 20px;
-        margin: 35px 0 25px 0;
-        position: relative;
-        align-items: center;
-        height: 220px;
-      }
-
-      /* Zona Central: A Nuvem da Internet */
-      .cloud-zone {
-        grid-column: 2;
-        height: 100%;
-        background: #f0f9ff;
-        border: 2px dashed #0284c7;
-        border-radius: 24px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-evenly;
-        align-items: center;
-        position: relative;
-        padding: 12px;
-        box-sizing: border-box;
-      }
-
-      .cloud-label {
-        position: absolute;
-        top: -12px;
-        font-size: 11px;
-        font-weight: bold;
-        color: #0369a1;
-        letter-spacing: 0.5px;
-        text-transform: uppercase;
-        background: #e0f2fe;
-        padding: 3px 12px;
-        border-radius: 12px;
-        border: 1px solid #bae6fd;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-      }
-
-      /* Nós da Rede (Apenas Ícones Soltos) */
-      .node-icon {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        font-size: 13px;
-        z-index: 2;
-        gap: 8px;
-      }
-
-      /* Ícones Grandes da Rede */
-      .node-icon i {
-        font-size: 52px;
-        filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.12));
-        transition: transform 0.2s ease;
-      }
-
-      .node-icon span {
-        line-height: 1.2;
-      }
-
-      /* Cores dos Ícones */
-      .server-icon {
-        grid-column: 1;
-        color: #16a34a;
-      }
-      .router-a-icon {
-        color: #0284c7;
-        flex-direction: row;
-        gap: 12px;
-      }
-      .router-b-icon {
-        color: #0891b2;
-        flex-direction: row;
-        gap: 12px;
-      }
-      .router-icon i {
-        font-size: 38px;
-      }
-      .client-icon {
-        grid-column: 3;
-        color: #4f46e5;
-      }
-
-      /* Pacote Solto (Apenas o Ícone com Badge) */
-      .packet-icon {
-        position: absolute;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 0;
-        z-index: 3;
-        color: #f43f5e; /* Vermelho vibrante */
-        font-size: 38px;
-        filter: drop-shadow(0 4px 8px rgba(244, 63, 94, 0.4));
-      }
-
-      /* Badge compacta anexada ao pacote */
-      .packet-badge {
-        position: absolute;
-        bottom: -2px;
-        right: -8px;
-        background: #be123c;
-        color: white;
-        font-size: 10px;
-        font-weight: 800;
-        padding: 1px 5px;
-        border-radius: 6px;
-        border: 1.5px solid white;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-      }
-
-      button {
-        background: #4f46e5;
-        color: white;
-        border: none;
-        padding: 14px 28px;
-        border-radius: 12px;
-        font-size: 16px;
-        font-weight: bold;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
-        transition: all 0.2s;
-      }
-      button:hover {
-        background: #4338ca;
-        transform: translateY(-1px);
-      }
-      button:disabled {
-        background: #94a3b8;
-        box-shadow: none;
-        cursor: not-allowed;
-        transform: none;
-      }
-
-      .buffer-box {
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        padding: 18px;
-        border-radius: 14px;
-        font-size: 14px;
-        margin-top: 24px;
-        text-align: left;
-      }
-      .buffer-slots {
-        display: flex;
-        gap: 12px;
-        justify-content: center;
-        margin-top: 12px;
-      }
-      .slot {
-        width: 54px;
-        height: 54px;
-        border: 2px dashed #cbd5e1;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        font-size: 15px;
-        background: white;
-        color: #64748b;
-      }
-      .slot.filled {
-        border-style: solid;
-        border-color: #4f46e5;
-        background: #e0e7ff;
-        color: #312e81;
-        box-shadow: 0 2px 8px rgba(79, 70, 229, 0.2);
-      }
+      :root { --ink:#10233f; --muted:#60728a; --line:#dbe5f0; --indigo:#4f46e5; --cyan:#0284c7; --slow:#f59e0b; }
+      * { box-sizing:border-box; }
+      body { margin:0; min-height:100vh; display:grid; place-items:center; padding:24px; font-family:Inter,ui-sans-serif,system-ui,-apple-system,sans-serif; color:var(--ink); background:radial-gradient(circle at 20% 5%,#e0f2fe 0,transparent 28rem),#f7f9fc; }
+      .card { width:min(100%,1000px); overflow:hidden; background:#fff; border:1px solid #e6edf5; border-radius:24px; box-shadow:0 22px 55px rgba(20,49,82,.12); }
+      header { padding:28px 32px 18px; text-align:left; }
+      .eyebrow { display:flex; align-items:center; gap:8px; margin:0 0 8px; color:#0369a1; font-size:.74rem; font-weight:800; letter-spacing:.1em; text-transform:uppercase; }
+      h1 { margin:0; font-size:clamp(1.45rem,3vw,2rem); letter-spacing:-.04em; }
+      .intro { max-width:680px; margin:9px 0 0; color:var(--muted); line-height:1.55; }
+      .legend { display:flex; flex-wrap:wrap; gap:10px 18px; padding:0 32px 14px; color:#52657c; font-size:.8rem; }
+      .legend-item { display:flex; align-items:center; gap:7px; } .dot { width:9px; height:9px; border-radius:50%; } .dot.fast { background:var(--cyan); } .dot.slow { background:var(--slow); }
+      .network-panel { margin:0 18px; padding:6px; border-radius:20px; background:linear-gradient(145deg,#f7fbff,#eef6ff); border:1px solid #deebf7; }
+      svg { display:block; width:100%; height:auto; min-height:300px; }
+      .cloud { fill:#effaff; stroke:#7dd3fc; stroke-width:2.5; filter:drop-shadow(0 7px 8px rgba(2,132,199,.08)); }
+      .route { fill:none; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-dasharray:9 10; opacity:.62; }
+      .route.fast { stroke:var(--cyan); } .route.slow { stroke:var(--slow); }
+      .route.active { opacity:1; stroke-dashoffset:-19; animation:flow .65s linear infinite; }
+      @keyframes flow { to { stroke-dashoffset:-38; } }
+      .node { filter:drop-shadow(0 4px 5px rgba(15,45,78,.14)); } .node .circle { fill:#fff; stroke-width:3; } .node.fast .circle { stroke:var(--cyan); } .node.slow .circle { stroke:var(--slow); }
+      .node text { font-size:12px; font-weight:800; fill:#31506e; text-anchor:middle; } .endpoint text { font-size:14px; fill:#18385a; text-anchor:middle; }
+      .endpoint .endpoint-bg { fill:#fff; stroke:#cfe0ef; stroke-width:2; } .endpoint.server .endpoint-bg { stroke:#22c55e; } .endpoint.client .endpoint-bg { stroke:#818cf8; }
+      .device-icon { fill:none; stroke:#31506e; stroke-width:2.3; stroke-linecap:round; stroke-linejoin:round; } .server .device-icon { stroke:#16a34a; } .client .device-icon { stroke:#4f46e5; }
+      .cloud-title { font-size:13px; font-weight:800; fill:#0369a1; letter-spacing:.08em; text-anchor:middle; }
+      .route-label { font-size:11px; font-weight:800; text-anchor:middle; } .route-label.fast { fill:#047ba8; } .route-label.slow { fill:#b45309; }
+      .packet { opacity:0; pointer-events:none; filter:drop-shadow(0 5px 6px rgba(190,24,93,.28)); transition:opacity .2s; } .packet.visible { opacity:1; }
+      .packet rect { fill:#f43f5e; stroke:#fff; stroke-width:2; } .packet text { fill:#fff; font-size:11px; font-weight:900; text-anchor:middle; dominant-baseline:middle; }
+      .status { min-height:28px; margin:18px 32px 0; color:#415670; font-size:.92rem; text-align:center; }
+      .controls { display:flex; justify-content:center; padding:4px 32px 24px; }
+      button { border:0; border-radius:12px; padding:13px 22px; background:var(--indigo); color:#fff; font:700 .96rem inherit; cursor:pointer; box-shadow:0 6px 16px rgba(79,70,229,.28); transition:.2s; } button:hover:not(:disabled) { transform:translateY(-2px); background:#4338ca; } button:disabled { cursor:not-allowed; background:#94a3b8; box-shadow:none; }
+      .buffer { padding:22px 32px 30px; background:#fbfcfe; border-top:1px solid #e8eef5; } .buffer-head { display:flex; align-items:center; justify-content:space-between; gap:12px; } .buffer h2 { margin:0; font-size:1rem; } .buffer small { color:var(--muted); }
+      .slots { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:14px; } .slot { min-height:60px; display:grid; place-items:center; border:2px dashed #cbd5e1; border-radius:12px; color:#94a3b8; font-weight:800; background:#fff; transition:.25s; } .slot.filled { border-style:solid; border-color:#818cf8; background:#eef2ff; color:#3730a3; box-shadow:0 3px 9px rgba(79,70,229,.14); }
+      @media (max-width:600px) { body { padding:10px; } .card { border-radius:18px; } header { padding:22px 20px 12px; } .legend,.status,.controls,.buffer { margin-left:0; margin-right:0; padding-left:20px; padding-right:20px; } .network-panel { margin:0 8px; } svg { min-height:230px; } .endpoint text { font-size:12px; } .node text,.route-label { font-size:10px; } }
     </style>
   </head>
   <body>
-    <div class="card">
-      <h2>📲 Microssimulador: Download por Pacotes</h2>
-      <p>
-        <small
-          >Os pacotes saem do Servidor, navegam pela
-          <strong>Nuvem da Internet</strong> e chegam ao iPad.</small
-        >
-      </p>
-
-      <div class="network-container" id="network">
-        <!-- Servidor (Esquerda) -->
-        <div class="node-icon server-icon">
-          <i class="fa-solid fa-server"></i>
-          <span
-            >Data Center<br /><small style="color: #64748b; font-weight: normal"
-              >(Servidor)</small
-            ></span
-          >
-        </div>
-
-        <!-- Nuvem Centralizada com Roteadores -->
-        <div class="cloud-zone">
-          <span class="cloud-label"
-            ><i class="fa-solid fa-cloud"></i> Nuvem da Internet</span
-          >
-
-          <div id="rA" class="node-icon router-icon router-a-icon">
-            <i class="fa-solid fa-route"></i>
-            <span
-              >Roteador A<br /><small
-                style="color: #64748b; font-weight: normal"
-                >(Caminho Rápido)</small
-              ></span
-            >
-          </div>
-
-          <div id="rB" class="node-icon router-icon router-b-icon">
-            <i class="fa-solid fa-network-wired"></i>
-            <span
-              >Roteador B<br /><small
-                style="color: #64748b; font-weight: normal"
-                >(Caminho Lento)</small
-              ></span
-            >
-          </div>
-        </div>
-
-        <!-- iPad (Direita) -->
-        <div class="node-icon client-icon">
-          <i class="fa-solid fa-tablet-screen-button"></i>
-          <span
-            >Seu iPad<br /><small style="color: #64748b; font-weight: normal"
-              >(Usuário)</small
-            ></span
-          >
-        </div>
-
-        <!-- Pacotes Animados (Apenas o Ícone da Caixa Solto) -->
-        <div id="p1" class="packet-icon">
-          <i class="fa-solid fa-envelope"></i>
-          <span class="packet-badge">P1</span>
-        </div>
-        <div id="p2" class="packet-icon">
-          <i class="fa-solid fa-envelope"></i>
-          <span class="packet-badge">P2</span>
-        </div>
-        <div id="p3" class="packet-icon">
-          <i class="fa-solid fa-envelope"></i>
-          <span class="packet-badge">P3</span>
-        </div>
-      </div>
-
-      <button id="btn" onclick="simularDownload()">
-        <i class="fa-solid fa-download"></i> Baixar Foto (3 Pacotes)
-      </button>
-
-      <div class="buffer-box">
-        <strong
-          ><i class="fa-solid fa-memory"></i> Memória RAM do iPad
-          (Buffer):</strong
-        >
-        <div class="buffer-slots">
-          <div id="s1" class="slot">-</div>
-          <div id="s2" class="slot">-</div>
-          <div id="s3" class="slot">-</div>
-        </div>
-        <p
-          id="log"
-          style="
-            text-align: center;
-            margin-top: 14px;
-            font-family: monospace;
-            color: #475569;
-          "
-        >
-          Clique no botão para iniciar o download.
-        </p>
-      </div>
-    </div>
-
+    <main class="card">
+      <header>
+        <p class="eyebrow"><i class="fa-solid fa-satellite-dish"></i> Microssimulador de rede</p>
+        <h1>Download de imagem por pacotes</h1>
+        <p class="intro">Uma foto é quebrada em partes menores. Cada pacote pode atravessar uma rota diferente, com vários roteadores, e chegar ao iPad em outra ordem.</p>
+      </header>
+      <div class="legend"><span class="legend-item"><i class="dot fast"></i> Rota rápida: menos saltos</span><span class="legend-item"><i class="dot slow"></i> Rota alternativa: mais saltos</span></div>
+      <section class="network-panel" aria-label="Animação do percurso dos pacotes">
+        <svg id="network" viewBox="0 0 920 390" role="img" aria-label="Servidor, internet com duas rotas de múltiplos roteadores e iPad">
+          <path class="cloud" d="M145 309 C91 301 78 242 112 210 C76 163 113 96 173 111 C179 50 257 39 296 88 C336 39 408 49 434 101 C478 53 553 72 568 125 C623 76 698 111 690 169 C810 157 852 220 820 265 C850 310 798 354 742 333 C688 374 598 367 551 321 C506 365 438 355 410 313 C368 365 292 360 261 313 C225 340 180 337 145 309 Z" />
+          <text x="460" y="27" class="cloud-title">☁ NUVEM DA INTERNET</text>
+          <path id="fastPath" class="route fast" d="M130 192 C205 155 230 145 283 153 S385 176 438 160 S529 132 602 183 S697 212 793 192" />
+          <path id="slowPath" class="route slow" d="M130 198 C195 259 238 271 293 252 S388 230 433 267 S530 299 575 246 S685 242 793 198" />
+          <text x="431" y="133" class="route-label fast">rota rápida · 3 saltos</text><text x="439" y="308" class="route-label slow">rota alternativa · 4 saltos</text>
+          <g class="node fast"><circle class="circle" cx="278" cy="153" r="19"/><text x="278" y="157">R1</text></g><g class="node fast"><circle class="circle" cx="438" cy="160" r="19"/><text x="438" y="164">R2</text></g><g class="node fast"><circle class="circle" cx="603" cy="183" r="19"/><text x="603" y="187">R3</text></g>
+          <g class="node slow"><circle class="circle" cx="292" cy="252" r="19"/><text x="292" y="256">R4</text></g><g class="node slow"><circle class="circle" cx="433" cy="267" r="19"/><text x="433" y="271">R5</text></g><g class="node slow"><circle class="circle" cx="575" cy="246" r="19"/><text x="575" y="250">R6</text></g><g class="node slow"><circle class="circle" cx="682" cy="241" r="19"/><text x="682" y="245">R7</text></g>
+          <g class="endpoint server"><rect class="endpoint-bg" x="28" y="147" width="110" height="96" rx="18"/><g class="device-icon"><rect x="70" y="164" width="26" height="29" rx="3"/><path d="M70 174h26M70 184h26M77 169h.1M77 179h.1M77 189h.1"/></g><text x="83" y="213">Data Center</text><text x="83" y="231" style="font-size:11px;font-weight:600;fill:#60728a">Servidor</text></g>
+          <g class="endpoint client"><rect class="endpoint-bg" x="790" y="147" width="104" height="96" rx="18"/><g class="device-icon"><rect x="831" y="160" width="22" height="35" rx="4"/><path d="M839 190h6"/></g><text x="842" y="213">Seu iPad</text><text x="842" y="231" style="font-size:11px;font-weight:600;fill:#60728a">Usuário</text></g>
+          <g id="p1" class="packet"><rect x="-19" y="-15" width="38" height="30" rx="8"/><text y="1">P1</text></g><g id="p2" class="packet"><rect x="-19" y="-15" width="38" height="30" rx="8"/><text y="1">P2</text></g><g id="p3" class="packet"><rect x="-19" y="-15" width="38" height="30" rx="8"/><text y="1">P3</text></g>
+        </svg>
+      </section>
+      <p id="status" class="status" aria-live="polite">Pronto para iniciar o download.</p>
+      <div class="controls"><button id="btn" type="button"><i class="fa-solid fa-download"></i> Baixar foto (3 pacotes)</button></div>
+      <section class="buffer"><div class="buffer-head"><h2><i class="fa-solid fa-memory"></i> Buffer do iPad</h2><small>Reorganiza os pacotes antes de abrir a foto</small></div><div class="slots"><div id="s1" class="slot">—</div><div id="s2" class="slot">—</div><div id="s3" class="slot">—</div></div></section>
+    </main>
     <script>
-      function simularDownload() {
-        const btn = document.getElementById("btn");
-        const log = document.getElementById("log");
-        btn.disabled = true;
-
-        // 1. Limpar slots de memória
-        ["s1", "s2", "s3"].forEach((id) => {
-          const el = document.getElementById(id);
-          el.innerText = "-";
-          el.className = "slot";
-        });
-
-        const p1 = document.getElementById("p1");
-        const p2 = document.getElementById("p2");
-        const p3 = document.getElementById("p3");
-        const pacotes = [p1, p2, p3];
-
-        // 2. RESET INSTANTÂNEO: Posição centralizada no Data Center
-        pacotes.forEach((p) => {
-          p.style.transition = "none";
-          p.style.left = "42px";
-          p.style.top = "88px";
-          p.style.opacity = "0";
-        });
-
-        void p1.offsetWidth;
-
-        // 3. SURGIMENTO no Servidor (T = 0.2s)
-        setTimeout(() => {
-          pacotes.forEach((p) => {
-            p.style.transition = "all 2.4s ease-in-out";
-            p.style.opacity = "1";
-          });
-          log.innerText = "Servidor dividiu a imagem em P1, P2 e P3...";
-        }, 200);
-
-        // ETAPA 1: P2 entra na Nuvem via Roteador A (T = 1.6s)
-        setTimeout(() => {
-          p2.style.left = "295px";
-          p2.style.top = "38px";
-          log.innerText = "P2 entrou na Nuvem via Roteador A...";
-        }, 1600);
-
-        // ETAPA 2: P1 entra na Nuvem via Roteador B (T = 3.2s)
-        setTimeout(() => {
-          p1.style.left = "295px";
-          p1.style.top = "142px";
-          log.innerText = "P1 entrou na Nuvem via Roteador B...";
-        }, 3200);
-
-        // ETAPA 3: P3 entra na Nuvem via Roteador B (T = 4.8s)
-        setTimeout(() => {
-          p3.style.left = "295px";
-          p3.style.top = "142px";
-          log.innerText = "P3 entrou na Nuvem via Roteador B...";
-        }, 4800);
-
-        // ETAPA 4: P2 sai da Nuvem e chega ao iPad (T = 6.4s)
-        setTimeout(() => {
-          p2.style.left = "595px";
-          p2.style.top = "88px";
-        }, 6400);
-
-        // LEGENDA 4: Dispara exatamente quando P2 conclui o movimento ao iPad (T = 8.8s)
-        setTimeout(() => {
-          document.getElementById("s2").innerText = "P2";
-          document.getElementById("s2").classList.add("filled");
-          log.innerText = "⚡ P2 chegou primeiro ao iPad! Guardado no buffer.";
-        }, 8800);
-
-        // ETAPA 5: P1 chega ao iPad (T = 9.0s)
-        setTimeout(() => {
-          p1.style.left = "595px";
-          p1.style.top = "88px";
-        }, 9000);
-
-        // LEGENDA 5: Dispara exatamente quando P1 conclui o movimento (T = 11.4s)
-        setTimeout(() => {
-          document.getElementById("s1").innerText = "P1";
-          document.getElementById("s1").classList.add("filled");
-          log.innerText = "P1 chegou! Falta apenas o P3 para abrir a foto...";
-        }, 11400);
-
-        // ETAPA 6: P3 chega ao iPad (T = 11.6s)
-        setTimeout(() => {
-          p3.style.left = "595px";
-          p3.style.top = "88px";
-        }, 11600);
-
-        // LEGENDA 6: Dispara exatamente quando P3 conclui o movimento (T = 14.0s)
-        setTimeout(() => {
-          document.getElementById("s3").innerText = "P3";
-          document.getElementById("s3").classList.add("filled");
-          log.innerText =
-            "🖼️ Sucesso! P3 chegou, o iPad reordenou [P1, P2, P3] e a foto abriu.";
-          btn.disabled = false;
-        }, 14000);
+      const network = document.getElementById('network');
+      const btn = document.getElementById('btn');
+      const status = document.getElementById('status');
+      const paths = { fast: document.getElementById('fastPath'), slow: document.getElementById('slowPath') };
+      let animationFrame;
+      function positionPacket(packet, path, progress) { const point = path.getPointAtLength(path.getTotalLength() * progress); packet.setAttribute('transform', `translate(${point.x} ${point.y})`); }
+      function reset() { cancelAnimationFrame(animationFrame); document.querySelectorAll('.packet').forEach(packet => { packet.classList.remove('visible'); packet.removeAttribute('transform'); }); document.querySelectorAll('.route').forEach(path => path.classList.remove('active')); ['s1','s2','s3'].forEach(id => { const slot = document.getElementById(id); slot.textContent = '—'; slot.className = 'slot'; }); }
+      function animatePacket(id, route, delay, duration, onStart, onFinish) { const packet = document.getElementById(id); const path = paths[route]; setTimeout(() => { packet.classList.add('visible'); path.classList.add('active'); const started = performance.now(); function step(now) { const progress = Math.min((now - started) / duration, 1); positionPacket(packet, path, progress); if (progress < 1) { animationFrame = requestAnimationFrame(step); } else { onFinish(); } } onStart(); animationFrame = requestAnimationFrame(step); }, delay); }
+      function simularDownload() { reset(); btn.disabled = true; status.textContent = 'O servidor dividiu a foto em P1, P2 e P3.'; let finished = 0; const arrived = (packet) => { document.getElementById('s' + packet.slice(1)).textContent = packet; document.getElementById('s' + packet.slice(1)).classList.add('filled'); finished += 1; if (finished === 1) status.textContent = `⚡ ${packet} chegou primeiro e foi armazenado no buffer.`; else if (finished < 3) status.textContent = `${packet} chegou. O iPad ainda aguarda os demais pacotes.`; else { status.textContent = '🖼️ Todos chegaram! O iPad reordenou P1, P2 e P3 e abriu a foto.'; btn.disabled = false; } };
+        animatePacket('p2','fast',700,3300,() => status.textContent = 'P2 segue pela rota rápida, passando por R1, R2 e R3.',() => arrived('P2'));
+        animatePacket('p1','slow',1400,5200,() => status.textContent = 'P1 escolheu a rota alternativa, com mais saltos.',() => arrived('P1'));
+        animatePacket('p3','slow',2400,6100,() => status.textContent = 'P3 também está na rota alternativa e encontra mais trânsito.',() => arrived('P3'));
       }
+      btn.addEventListener('click', simularDownload);
     </script>
   </body>
 </html>
