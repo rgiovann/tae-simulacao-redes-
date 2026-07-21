@@ -1,0 +1,1473 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simulador: Encapsulamento TCP/IP</title>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+    <style>
+      :root {
+        --ink: #10233f;
+        --muted: #60728a;
+        --line: #dbe5f0;
+        --indigo: #4f46e5;
+        --app: #8b5cf6;
+        --trans: #06b6d4;
+        --net: #3b82f6;
+        --link: #10b981;
+        --phys: #f59e0b;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 16px;
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 20% 5%, #e0f2fe 0, transparent 28rem),
+          #f7f9fc;
+      }
+      .card {
+        width: min(100%, 1300px);
+        overflow: hidden;
+        background: #fff;
+        border: 1px solid #e6edf5;
+        border-radius: 24px;
+        box-shadow: 0 22px 55px rgba(20, 49, 82, 0.12);
+      }
+      header {
+        padding: 24px 32px 14px;
+        text-align: left;
+      }
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 8px;
+        color: #0369a1;
+        font-size: 0.74rem;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+      h1 {
+        margin: 0;
+        font-size: clamp(1.3rem, 2.5vw, 1.8rem);
+        letter-spacing: -0.04em;
+      }
+      .intro {
+        max-width: 720px;
+        margin: 8px 0 0;
+        color: var(--muted);
+        line-height: 1.5;
+        font-size: 0.9rem;
+      }
+
+      /* Área principal com espaço para o pacote */
+      .workspace {
+        display: grid;
+        grid-template-columns: 220px 1fr 220px;
+        gap: 24px;
+        padding: 0 24px 16px;
+        align-items: start;
+        min-height: 420px;
+      }
+
+      /* Torres de camadas */
+      .tower {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 14px;
+        border-radius: 16px;
+        background: #f8fbff;
+        border: 1px solid #e0e9f3;
+      }
+      .tower-header {
+        text-align: center;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #e0e9f3;
+        margin-bottom: 4px;
+      }
+      .tower-header h3 {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--ink);
+      }
+      .tower-header small {
+        color: var(--muted);
+        font-size: 0.7rem;
+      }
+
+      .layer {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        background: #fff;
+        border: 2px solid #e2e8f0;
+        transition: all 0.3s;
+        position: relative;
+        cursor: pointer;
+      }
+      .layer:hover {
+        transform: translateX(3px);
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+      }
+      .layer.active {
+        border-width: 3px;
+        font-weight: 700;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+        transform: scale(1.02);
+      }
+      .layer-number {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        font-size: 0.75rem;
+        font-weight: 800;
+        color: #fff;
+        flex-shrink: 0;
+      }
+      .layer-info {
+        flex: 1;
+      }
+      .layer-name {
+        font-size: 0.8rem;
+        font-weight: 700;
+      }
+      .layer-protocol {
+        font-size: 0.68rem;
+        color: var(--muted);
+      }
+      .layer-icon {
+        font-size: 1rem;
+        opacity: 0.7;
+      }
+
+      .layer-app {
+        border-color: var(--app);
+      }
+      .layer-app .layer-number {
+        background: var(--app);
+      }
+      .layer-app.active {
+        background: #f5f3ff;
+        border-color: var(--app);
+      }
+
+      .layer-trans {
+        border-color: var(--trans);
+      }
+      .layer-trans .layer-number {
+        background: var(--trans);
+      }
+      .layer-trans.active {
+        background: #ecfeff;
+        border-color: var(--trans);
+      }
+
+      .layer-net {
+        border-color: var(--net);
+      }
+      .layer-net .layer-number {
+        background: var(--net);
+      }
+      .layer-net.active {
+        background: #eff6ff;
+        border-color: var(--net);
+      }
+
+      .layer-link {
+        border-color: var(--link);
+      }
+      .layer-link .layer-number {
+        background: var(--link);
+      }
+      .layer-link.active {
+        background: #ecfdf5;
+        border-color: var(--link);
+      }
+
+      .layer-phys {
+        border-color: var(--phys);
+      }
+      .layer-phys .layer-number {
+        background: var(--phys);
+      }
+      .layer-phys.active {
+        background: #fffbeb;
+        border-color: var(--phys);
+      }
+
+      /* Coluna central */
+      .center-column {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        position: relative;
+        min-height: 380px;
+      }
+
+      /* Área do pacote encapsulado */
+      .packet-stage {
+        width: 100%;
+        min-height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      }
+
+      /* Pacote como pilha de retângulos */
+      .packet-stack {
+        display: flex;
+        align-items: center;
+        height: 56px;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 3px solid #334155;
+        background: #fff;
+      }
+
+      .packet-header {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 12px;
+        font-size: 0.7rem;
+        font-weight: 800;
+        white-space: nowrap;
+        transition: all 0.4s ease;
+        position: relative;
+        overflow: hidden;
+        min-width: 0;
+        width: 0;
+        opacity: 0;
+        border-right: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      /* Estado ativo — cor viva */
+      .packet-header.app-active {
+        background: var(--app);
+        color: #fff;
+      }
+      .packet-header.trans-active {
+        background: var(--trans);
+        color: #fff;
+      }
+      .packet-header.net-active {
+        background: var(--net);
+        color: #fff;
+      }
+      .packet-header.link-active {
+        background: var(--link);
+        color: #fff;
+      }
+      .packet-header.phys-active {
+        background: var(--phys);
+        color: #fff;
+      }
+
+      /* Estado inativo (empilhado) — cinza apagado */
+      .packet-header.app-inactive {
+        background: #e2e8f0;
+        color: #94a3b8;
+        border-right: 1px solid #cbd5e1;
+      }
+      .packet-header.trans-inactive {
+        background: #e2e8f0;
+        color: #94a3b8;
+        border-right: 1px solid #cbd5e1;
+      }
+      .packet-header.net-inactive {
+        background: #e2e8f0;
+        color: #94a3b8;
+        border-right: 1px solid #cbd5e1;
+      }
+      .packet-header.link-inactive {
+        background: #e2e8f0;
+        color: #94a3b8;
+        border-right: 1px solid #cbd5e1;
+      }
+      .packet-header.phys-inactive {
+        background: #e2e8f0;
+        color: #94a3b8;
+        border-right: 1px solid #cbd5e1;
+      }
+
+      .packet-header.show {
+        min-width: 52px;
+        width: auto;
+        padding: 0 12px;
+        opacity: 1;
+      }
+
+      .packet-data {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 40px;
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--muted);
+        background: #f8fafc;
+        white-space: nowrap;
+        min-width: 140px;
+        transition: all 0.4s ease;
+      }
+
+      /* Seta de transmissão */
+      .transmission-arrow {
+        display: none;
+        align-items: center;
+        gap: 12px;
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: #0369a1;
+        animation: pulse 1s ease-in-out infinite;
+        padding: 12px 24px;
+        border-radius: 12px;
+        background: #e0f2fe;
+        border: 2px solid #7dd3fc;
+      }
+      .transmission-arrow.show {
+        display: flex;
+      }
+      .transmission-arrow i {
+        font-size: 1.5rem;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 0.7;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 1;
+          transform: scale(1.05);
+        }
+      }
+
+      /* Status e controles */
+      .status-bar {
+        margin: 0 24px 12px;
+        padding: 14px 18px;
+        border-radius: 12px;
+        background: #f8fbff;
+        border: 1px solid #dbeafe;
+        text-align: center;
+        min-height: 52px;
+        display: grid;
+        place-items: center;
+      }
+      .status-bar p {
+        margin: 0;
+        color: #415670;
+        font-size: 0.9rem;
+      }
+      .status-bar strong {
+        color: var(--indigo);
+      }
+
+      .controls {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        padding: 0 24px 20px;
+      }
+      button {
+        border: 0;
+        border-radius: 12px;
+        padding: 12px 20px;
+        background: var(--indigo);
+        color: #fff;
+        font: 700 0.9rem inherit;
+        cursor: pointer;
+        box-shadow: 0 6px 16px rgba(79, 70, 229, 0.28);
+        transition: 0.2s;
+      }
+      button:hover:not(:disabled) {
+        transform: translateY(-2px);
+        background: #4338ca;
+      }
+      button:disabled {
+        cursor: not-allowed;
+        background: #94a3b8;
+        box-shadow: none;
+      }
+      .secondary {
+        padding: 10px 14px;
+        background: #fff;
+        border: 1px solid #cbd5e1;
+        color: #415670;
+        box-shadow: none;
+      }
+      .speed {
+        display: flex;
+        gap: 6px;
+      }
+      .speed button {
+        padding: 6px 10px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        background: #fff;
+        box-shadow: none;
+        color: #42566f;
+        font-size: 0.75rem;
+      }
+      .speed button.selected {
+        background: #e0e7ff;
+        border-color: #818cf8;
+        color: #3730a3;
+      }
+
+      /* Info panel */
+      .info-panel {
+        margin: 0 24px 16px;
+        padding: 16px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #f8faff, #eef2ff);
+        border: 2px solid #e0e7ff;
+        display: none;
+      }
+      .info-panel.show {
+        display: block;
+        animation: appear 0.35s ease-out;
+      }
+      .info-panel h3 {
+        margin: 0 0 6px;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .info-panel p {
+        margin: 0;
+        color: #374151;
+        font-size: 0.82rem;
+        line-height: 1.55;
+      }
+      .info-panel .protocol-tag {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 20px;
+        background: #e0e7ff;
+        color: #4338ca;
+        font-size: 0.72rem;
+        font-weight: 700;
+        margin-top: 6px;
+      }
+
+      /* Takeaway */
+      .takeaway {
+        margin: 0 24px 24px;
+        padding: 16px;
+        border-radius: 14px;
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        display: none;
+      }
+      .takeaway.show {
+        display: block;
+        animation: appear 0.35s ease-out;
+      }
+      .takeaway h2 {
+        margin: 0;
+        color: #166534;
+        font-size: 0.95rem;
+      }
+      .takeaway p {
+        margin: 6px 0 0;
+        color: #276749;
+        line-height: 1.45;
+        font-size: 0.85rem;
+      }
+
+      @keyframes appear {
+        from {
+          opacity: 0;
+          transform: translateY(5px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+
+      /* Tooltip */
+      .layer-tooltip {
+        position: absolute;
+        left: calc(100% + 10px);
+        top: 50%;
+        transform: translateY(-50%);
+        width: 200px;
+        padding: 10px;
+        border-radius: 8px;
+        background: #1e293b;
+        color: #fff;
+        font-size: 0.72rem;
+        line-height: 1.45;
+        z-index: 100;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      }
+      .layer:hover .layer-tooltip {
+        opacity: 1;
+      }
+      .layer-tooltip::before {
+        content: "";
+        position: absolute;
+        left: -5px;
+        top: 50%;
+        transform: translateY(-50%);
+        border-width: 5px 5px 5px 0;
+        border-style: solid;
+        border-color: transparent #1e293b transparent transparent;
+      }
+
+      /* Labels de operação */
+      .operation-label {
+        font-size: 0.75rem;
+        font-weight: 800;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 8px;
+        text-align: center;
+      }
+
+      @media (max-width: 1000px) {
+        .workspace {
+          grid-template-columns: 180px 1fr 180px;
+          gap: 16px;
+        }
+        .packet-header.show {
+          min-width: 44px;
+          padding: 0 8px;
+          font-size: 0.65rem;
+        }
+        .packet-data {
+          padding: 0 24px;
+          min-width: 100px;
+          font-size: 0.8rem;
+        }
+      }
+      @media (max-width: 800px) {
+        .workspace {
+          grid-template-columns: 1fr;
+          gap: 16px;
+        }
+        .center-column {
+          order: -1;
+          min-height: 200px;
+        }
+        .layer-tooltip {
+          display: none;
+        }
+        .packet-stage {
+          min-height: 80px;
+        }
+      }
+      @media (max-width: 600px) {
+        body {
+          padding: 10px;
+        }
+        .card {
+          border-radius: 18px;
+        }
+        header {
+          padding: 20px 16px 10px;
+        }
+        .workspace {
+          padding: 0 16px 16px;
+        }
+        .status-bar,
+        .controls,
+        .info-panel,
+        .takeaway {
+          margin-left: 16px;
+          margin-right: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <header>
+        <p class="eyebrow">
+          <i class="fa-solid fa-layer-group"></i> Microssimulador de rede
+        </p>
+        <h1>Encapsulamento TCP/IP: A Viagem do Pacote</h1>
+        <p class="intro">
+          Cada camada adiciona um cabeçalho ao pacote. O cabeçalho anterior vira
+          "dado" para a próxima camada. Veja como o pacote vai crescendo!
+        </p>
+      </header>
+
+      <div class="workspace">
+        <!-- Torre Cliente -->
+        <div class="tower" id="clientTower">
+          <div class="tower-header">
+            <h3><i class="fa-solid fa-tablet-screen-button"></i> Cliente</h3>
+            <small>Seu iPad</small>
+          </div>
+          <div class="layer layer-app" data-layer="app" data-side="client">
+            <span class="layer-number">5</span>
+            <div class="layer-info">
+              <div class="layer-name">Aplicação</div>
+              <div class="layer-protocol">HTTP, DNS</div>
+            </div>
+            <i class="fa-solid fa-globe layer-icon"></i>
+            <div class="layer-tooltip">
+              Cria a mensagem que será enviada: "GET /pagina.html"
+            </div>
+          </div>
+          <div class="layer layer-trans" data-layer="trans" data-side="client">
+            <span class="layer-number">4</span>
+            <div class="layer-info">
+              <div class="layer-name">Transporte</div>
+              <div class="layer-protocol">TCP, UDP</div>
+            </div>
+            <i class="fa-solid fa-truck layer-icon"></i>
+            <div class="layer-tooltip">
+              Divide em pacotes e adiciona número de porta
+            </div>
+          </div>
+          <div class="layer layer-net" data-layer="net" data-side="client">
+            <span class="layer-number">3</span>
+            <div class="layer-info">
+              <div class="layer-name">Rede</div>
+              <div class="layer-protocol">IP, ICMP</div>
+            </div>
+            <i class="fa-solid fa-map-location-dot layer-icon"></i>
+            <div class="layer-tooltip">
+              Adiciona endereço IP de origem e destino
+            </div>
+          </div>
+          <div class="layer layer-link" data-layer="link" data-side="client">
+            <span class="layer-number">2</span>
+            <div class="layer-info">
+              <div class="layer-name">Enlace</div>
+              <div class="layer-protocol">Ethernet, Wi-Fi</div>
+            </div>
+            <i class="fa-solid fa-tower-broadcast layer-icon"></i>
+            <div class="layer-tooltip">
+              Adiciona endereço MAC do próximo salto
+            </div>
+          </div>
+          <div class="layer layer-phys" data-layer="phys" data-side="client">
+            <span class="layer-number">1</span>
+            <div class="layer-info">
+              <div class="layer-name">Física</div>
+              <div class="layer-protocol">Bits, Sinais</div>
+            </div>
+            <i class="fa-solid fa-bolt layer-icon"></i>
+            <div class="layer-tooltip">
+              Converte em sinais elétricos ou ondas de rádio
+            </div>
+          </div>
+        </div>
+
+        <!-- Coluna Central -->
+        <div class="center-column">
+          <div class="operation-label" id="operationLabel">Aguardando...</div>
+
+          <div class="packet-stage">
+            <div class="packet-stack" id="packetStack">
+              <div class="packet-header phys-inactive" id="hdrPhys">PHY</div>
+              <div class="packet-header link-inactive" id="hdrLink">ETH</div>
+              <div class="packet-header net-inactive" id="hdrNet">IP</div>
+              <div class="packet-header trans-inactive" id="hdrTrans">TCP</div>
+              <div class="packet-header app-inactive" id="hdrApp">HTTP</div>
+              <div class="packet-data" id="packetData">DADOS</div>
+            </div>
+          </div>
+
+          <div class="transmission-arrow" id="transArrow">
+            <i class="fa-solid fa-satellite-dish"></i>
+            <span>Transmitindo pela Internet...</span>
+            <i class="fa-solid fa-arrow-right"></i>
+          </div>
+        </div>
+
+        <!-- Torre Servidor -->
+        <div class="tower" id="serverTower">
+          <div class="tower-header">
+            <h3><i class="fa-solid fa-server"></i> Servidor</h3>
+            <small>Data Center</small>
+          </div>
+          <div class="layer layer-app" data-layer="app" data-side="server">
+            <span class="layer-number">5</span>
+            <div class="layer-info">
+              <div class="layer-name">Aplicação</div>
+              <div class="layer-protocol">HTTP, DNS</div>
+            </div>
+            <i class="fa-solid fa-globe layer-icon"></i>
+            <div class="layer-tooltip">Processa o pedido e gera a resposta</div>
+          </div>
+          <div class="layer layer-trans" data-layer="trans" data-side="server">
+            <span class="layer-number">4</span>
+            <div class="layer-info">
+              <div class="layer-name">Transporte</div>
+              <div class="layer-protocol">TCP, UDP</div>
+            </div>
+            <i class="fa-solid fa-truck layer-icon"></i>
+            <div class="layer-tooltip">
+              Verifica se todos os pacotes chegaram
+            </div>
+          </div>
+          <div class="layer layer-net" data-layer="net" data-side="server">
+            <span class="layer-number">3</span>
+            <div class="layer-info">
+              <div class="layer-name">Rede</div>
+              <div class="layer-protocol">IP, ICMP</div>
+            </div>
+            <i class="fa-solid fa-map-location-dot layer-icon"></i>
+            <div class="layer-tooltip">Verifica se o IP é deste servidor</div>
+          </div>
+          <div class="layer layer-link" data-layer="link" data-side="server">
+            <span class="layer-number">2</span>
+            <div class="layer-info">
+              <div class="layer-name">Enlace</div>
+              <div class="layer-protocol">Ethernet, Wi-Fi</div>
+            </div>
+            <i class="fa-solid fa-tower-broadcast layer-icon"></i>
+            <div class="layer-tooltip">Verifica o MAC e detecta erros</div>
+          </div>
+          <div class="layer layer-phys" data-layer="phys" data-side="server">
+            <span class="layer-number">1</span>
+            <div class="layer-info">
+              <div class="layer-name">Física</div>
+              <div class="layer-protocol">Bits, Sinais</div>
+            </div>
+            <i class="fa-solid fa-bolt layer-icon"></i>
+            <div class="layer-tooltip">Recebe sinais e converte para bits</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="status-bar" id="statusBar">
+        <p>
+          Pronto. Clique em <strong>"Enviar requisição"</strong> para ver o
+          encapsulamento!
+        </p>
+      </div>
+
+      <div class="info-panel" id="infoPanel">
+        <h3 id="infoTitle">
+          <i class="fa-solid fa-circle-info"></i> Camada de Aplicação
+        </h3>
+        <p id="infoText">O navegador cria a mensagem HTTP.</p>
+        <span class="protocol-tag" id="infoProtocol">GET /index.html</span>
+      </div>
+
+      <div class="controls">
+        <button id="btnSend" type="button">
+          <i class="fa-solid fa-paper-plane"></i> Enviar requisição
+        </button>
+        <button id="btnReset" class="secondary" type="button" disabled>
+          <i class="fa-solid fa-rotate-right"></i> Reiniciar
+        </button>
+        <div class="speed">
+          <button class="selected" data-speed="1" type="button">1×</button>
+          <button data-speed="0.5" type="button">0,5×</button>
+          <button data-speed="2" type="button">2×</button>
+        </div>
+      </div>
+
+      <div class="takeaway" id="takeaway">
+        <h2><i class="fa-solid fa-lightbulb"></i> O que aprendemos</h2>
+        <p>
+          O <strong>encapsulamento</strong> adiciona cabeçalhos camada por
+          camada. Cada novo cabeçalho "engole" o anterior, que vira seu
+          <strong>dado</strong> (por isso fica cinza). A
+          <strong>internet</strong> transporta o pacote completo. O
+          <strong>desencapsulamento</strong> remove os cabeçalhos na ordem
+          inversa. Cada camada só enxerga seu próprio cabeçalho — o resto é
+          apenas "dado"!
+        </p>
+      </div>
+    </main>
+
+    <script>
+      // ===== CONFIGURAÇÃO =====
+      const layers = ["app", "trans", "net", "link", "phys"];
+      const layerColors = {
+        app: "#8b5cf6",
+        trans: "#06b6d4",
+        net: "#3b82f6",
+        link: "#10b981",
+        phys: "#f59e0b",
+      };
+
+      // Info para DESCIDA (encapsulamento)
+      const infoDescida = {
+        app: {
+          title: "Camada 5 — Aplicação (Cliente)",
+          text: "O navegador cria a requisição HTTP GET. Estes são os DADOS que queremos enviar.",
+          protocol: "GET /pagina.html",
+        },
+        trans: {
+          title: "Camada 4 — Transporte (Cliente)",
+          text: 'O TCP pega o HTTP (agora é "dado" para ele) e adiciona seu cabeçalho: porta, sequência.',
+          protocol: "TCP + Porta 80",
+        },
+        net: {
+          title: "Camada 3 — Rede (Cliente)",
+          text: 'O IP pega o TCP+HTTP (agora é "dado" para ele) e adiciona endereços IP de origem e destino.',
+          protocol: "IP: 192.168.1.5 → 93.184.216.34",
+        },
+        link: {
+          title: "Camada 2 — Enlace (Cliente)",
+          text: 'O Ethernet pega tudo (agora é "dado") e adiciona o MAC do próximo salto.',
+          protocol: "MAC do gateway",
+        },
+        phys: {
+          title: "Camada 1 — Física (Cliente)",
+          text: 'Converte todo o pacote (agora é "dado" binário) em sinais elétricos ou ondas de rádio.',
+          protocol: "Sinais → Cabo/Ar",
+        },
+      };
+
+      // Info para SUBIDA no servidor (desencapsulamento para PROCESSAR)
+      const infoSubidaServer = {
+        phys: {
+          title: "Camada 1 — Física (Servidor)",
+          text: "O servidor recebe os sinais ópticos do cabo de fibra e converte para bits.",
+          protocol: "Sinais ópticos → Bits",
+        },
+        link: {
+          title: "Camada 2 — Enlace (Servidor)",
+          text: 'Lê o cabeçalho ETH, verifica o MAC. Remove ETH — o resto vira "dado" para a camada de cima.',
+          protocol: "MAC verificado ✓ | Remove ETH",
+        },
+        net: {
+          title: "Camada 3 — Rede (Servidor)",
+          text: 'Lê o cabeçalho IP, confirma que é deste servidor. Remove IP — o resto vira "dado".',
+          protocol: "IP destino = este servidor ✓ | Remove IP",
+        },
+        trans: {
+          title: "Camada 4 — Transporte (Servidor)",
+          text: 'Lê o cabeçalho TCP, verifica sequência. Remove TCP — o HTTP puro vira "dado" para aplicação.',
+          protocol: "Todos os pacotes OK ✓ | Remove TCP",
+        },
+        app: {
+          title: "Camada 5 — Aplicação (Servidor)",
+          text: 'Recebe o HTTP puro (os "dados" originais). Processa o pedido e prepara a resposta.',
+          protocol: "Processando GET...",
+        },
+      };
+
+      // Info para DESCIDA no servidor (encapsulamento da RESPOSTA)
+      const infoDescidaServer = {
+        app: {
+          title: "Camada 5 — Aplicação (Servidor)",
+          text: "O servidor prepara a resposta HTTP 200 OK com o conteúdo da página. Estes são os novos DADOS.",
+          protocol: "HTTP 200 OK + conteúdo",
+        },
+        trans: {
+          title: "Camada 4 — Transporte (Servidor)",
+          text: 'O TCP pega a resposta (agora é "dado" para ele) e adiciona cabeçalho: números de sequência.',
+          protocol: "TCP + Seq + ACK",
+        },
+        net: {
+          title: "Camada 3 — Rede (Servidor)",
+          text: 'O IP pega tudo (agora é "dado") e adiciona IP do seu iPad como destino.',
+          protocol: "IP: 93.184.216.34 → 192.168.1.5",
+        },
+        link: {
+          title: "Camada 2 — Enlace (Servidor)",
+          text: 'O Ethernet pega tudo (agora é "dado") e adiciona MAC do próximo salto.',
+          protocol: "MAC do próximo salto",
+        },
+        phys: {
+          title: "Camada 1 — Física (Servidor)",
+          text: 'Converte todo o pacote (agora é "dado" binário) em sinais ópticos para a fibra.',
+          protocol: "Bits → Sinais ópticos",
+        },
+      };
+
+      // Info para SUBIDA no cliente (desencapsulamento para RECEBER resposta)
+      const infoSubidaClient = {
+        phys: {
+          title: "Camada 1 — Física (Cliente)",
+          text: "Seu iPad recebe as ondas de rádio do Wi-Fi e converte para bits.",
+          protocol: "Ondas de rádio → Bits",
+        },
+        link: {
+          title: "Camada 2 — Enlace (Cliente)",
+          text: 'Lê o cabeçalho ETH, verifica MAC. Remove ETH — o resto vira "dado" para a camada de cima.',
+          protocol: "MAC verificado ✓ | Remove ETH",
+        },
+        net: {
+          title: "Camada 3 — Rede (Cliente)",
+          text: 'Lê o cabeçalho IP, confirma que é seu. Remove IP — o resto vira "dado".',
+          protocol: "IP destino = seu iPad ✓ | Remove IP",
+        },
+        trans: {
+          title: "Camada 4 — Transporte (Cliente)",
+          text: 'Lê o cabeçalho TCP, reordena, verifica. Remove TCP — o conteúdo puro vira "dado" para aplicação.',
+          protocol: "Resposta completa ✓ | Remove TCP",
+        },
+        app: {
+          title: "Camada 5 — Aplicação (Cliente)",
+          text: 'Recebe o conteúdo puro (os "dados" originais). O navegador renderiza a página!',
+          protocol: "Renderizando página...",
+        },
+      };
+
+      let speed = 1;
+      let isRunning = false;
+      let timers = [];
+
+      // ===== ELEMENTOS =====
+      const packetStack = document.getElementById("packetStack");
+      const packetData = document.getElementById("packetData");
+      const headers = {
+        app: document.getElementById("hdrApp"),
+        trans: document.getElementById("hdrTrans"),
+        net: document.getElementById("hdrNet"),
+        link: document.getElementById("hdrLink"),
+        phys: document.getElementById("hdrPhys"),
+      };
+      const statusBar = document.getElementById("statusBar");
+      const infoPanel = document.getElementById("infoPanel");
+      const infoTitle = document.getElementById("infoTitle");
+      const infoText = document.getElementById("infoText");
+      const infoProtocol = document.getElementById("infoProtocol");
+      const operationLabel = document.getElementById("operationLabel");
+      const transArrow = document.getElementById("transArrow");
+      const btnSend = document.getElementById("btnSend");
+      const btnReset = document.getElementById("btnReset");
+      const takeaway = document.getElementById("takeaway");
+
+      // ===== FUNÇÕES =====
+      function schedule(callback, delay) {
+        timers.push(setTimeout(callback, delay / speed));
+      }
+
+      function clearAllTimers() {
+        timers.forEach(clearTimeout);
+        timers = [];
+      }
+
+      function highlightLayer(layer, side) {
+        document
+          .querySelectorAll(".layer")
+          .forEach((l) => l.classList.remove("active"));
+        const target = document.querySelector(
+          `.layer[data-layer="${layer}"][data-side="${side}"]`,
+        );
+        if (target) target.classList.add("active");
+      }
+
+      function showInfo(title, text, protocol) {
+        infoTitle.innerHTML = title;
+        infoText.textContent = text;
+        infoProtocol.textContent = protocol;
+        infoPanel.classList.add("show");
+      }
+
+      function updateStatus(text) {
+        statusBar.querySelector("p").innerHTML = text;
+      }
+
+      function setOperationLabel(text) {
+        operationLabel.textContent = text;
+      }
+
+      function resetPacket() {
+        layers.forEach((l) => {
+          headers[l].classList.remove("show");
+          headers[l].className = "packet-header " + l + "-inactive";
+        });
+        packetData.textContent = "DADOS";
+        packetData.style.background = "#f8fafc";
+        packetData.style.color = "var(--muted)";
+        transArrow.classList.remove("show");
+      }
+
+      // Adiciona cabeçalho: o novo fica ativo (colorido), o anterior fica inativo (cinza)
+      function addHeader(layer) {
+        const idx = layers.indexOf(layer);
+
+        // O cabeçalho atual fica ATIVO (colorido)
+        headers[layer].className = "packet-header " + layer + "-active show";
+
+        // Os anteriores ficam INATIVOS (cinza)
+        for (let i = 0; i < idx; i++) {
+          const prev = layers[i];
+          if (headers[prev].classList.contains("show")) {
+            headers[prev].className =
+              "packet-header " + prev + "-inactive show";
+          }
+        }
+      }
+
+      // Remove cabeçalho: o que remove fica invisível, o próximo fica ativo (colorido)
+      function removeHeader(layer) {
+        const idx = layers.indexOf(layer);
+        headers[layer].classList.remove("show");
+
+        // O próximo cabeçalho (que estava inativo/cinza) volta a ser ativo/colorido
+        if (idx < layers.length - 1) {
+          const next = layers[idx + 1];
+          headers[next].className = "packet-header " + next + "-active show";
+        }
+      }
+
+      // ===== ANIMAÇÃO PRINCIPAL =====
+      function startSimulation() {
+        isRunning = true;
+        btnSend.disabled = true;
+        btnReset.disabled = true;
+        takeaway.classList.remove("show");
+        resetPacket();
+
+        // === FASE 1: CLIENTE ENCAPSULA (desce) ===
+        let delay = 0;
+        setOperationLabel("📤 Encapsulamento no Cliente");
+
+        // Aplicação — DADOS vira HTTP (ativo, colorido)
+        schedule(() => {
+          highlightLayer("app", "client");
+          const info = infoDescida.app;
+          showInfo(info.title, info.text, info.protocol);
+          packetData.textContent = "HTTP";
+          packetData.style.background = layerColors.app + "15";
+          packetData.style.color = layerColors.app;
+          updateStatus(
+            "Camada 5: O navegador cria a <strong>requisição HTTP</strong> — estes são os DADOS originais.",
+          );
+        }, delay);
+
+        delay += 2200;
+
+        // Transporte — HTTP vira "dado" (cinza), TCP aparece ativo (colorido)
+        schedule(() => {
+          highlightLayer("trans", "client");
+          const info = infoDescida.trans;
+          showInfo(info.title, info.text, info.protocol);
+          addHeader("app"); // HTTP aparece, mas como INATIVO (cinza)
+          packetData.textContent = "HTTP";
+          packetData.style.background = "#f8fafc";
+          packetData.style.color = "#94a3b8";
+          updateStatus(
+            'Camada 4: O TCP adiciona seu cabeçalho (ativo). O HTTP agora é <strong>"dado"</strong> (cinza).',
+          );
+        }, delay);
+
+        delay += 2200;
+
+        // Rede — TCP vira "dado" (cinza), IP aparece ativo (colorido)
+        schedule(() => {
+          highlightLayer("net", "client");
+          const info = infoDescida.net;
+          showInfo(info.title, info.text, info.protocol);
+          addHeader("trans");
+          updateStatus(
+            'Camada 3: O IP adiciona seu cabeçalho (ativo). O TCP agora é <strong>"dado"</strong> (cinza).',
+          );
+        }, delay);
+
+        delay += 2200;
+
+        // Enlace — IP vira "dado" (cinza), ETH aparece ativo (colorido)
+        schedule(() => {
+          highlightLayer("link", "client");
+          const info = infoDescida.link;
+          showInfo(info.title, info.text, info.protocol);
+          addHeader("net");
+          updateStatus(
+            'Camada 2: O Ethernet adiciona seu cabeçalho (ativo). O IP agora é <strong>"dado"</strong> (cinza).',
+          );
+        }, delay);
+
+        delay += 2200;
+
+        // Física — ETH vira "dado" (cinza), PHY aparece ativo (colorido)
+        schedule(() => {
+          highlightLayer("phys", "client");
+          const info = infoDescida.phys;
+          showInfo(info.title, info.text, info.protocol);
+          addHeader("link");
+          addHeader("phys");
+          updateStatus(
+            'Camada 1: A Física adiciona o último cabeçalho (ativo). Tudo acima é <strong>"dado"</strong> (cinza).',
+          );
+        }, delay);
+
+        delay += 2200;
+
+        // Transmissão
+        schedule(() => {
+          document
+            .querySelectorAll(".layer")
+            .forEach((l) => l.classList.remove("active"));
+          infoPanel.classList.remove("show");
+          setOperationLabel("🌐 Transmitindo pela Internet");
+          transArrow.classList.add("show");
+          updateStatus(
+            "Pacote completo! Todos os cabeçalhos empilhados viajam pela <strong>internet</strong>...",
+          );
+        }, delay);
+
+        delay += 2500;
+
+        // === FASE 2: SERVIDOR DESENCAPSULA (sobe para processar) ===
+        schedule(() => {
+          transArrow.classList.remove("show");
+          setOperationLabel("📥 Desencapsulamento no Servidor");
+          animateServerUp();
+        }, delay);
+      }
+
+      function animateServerUp() {
+        let delay = 0;
+
+        // Física — PHY é o cabeçalho ativo (colorido) no momento da chegada
+        schedule(() => {
+          highlightLayer("phys", "server");
+          const info = infoSubidaServer.phys;
+          showInfo(info.title, info.text, info.protocol);
+          updateStatus(
+            "Servidor — Camada 1: Recebe sinais. O PHY é o <strong>cabeçalho ativo</strong> (colorido).",
+          );
+        }, delay);
+
+        delay += 2200;
+
+        // Enlace — remove PHY, ETH volta a ser ativo (colorido)
+        schedule(() => {
+          highlightLayer("link", "server");
+          const info = infoSubidaServer.link;
+          showInfo(info.title, info.text, info.protocol);
+          removeHeader("phys");
+          updateStatus(
+            "Servidor — Camada 2: <strong>Remove o PHY</strong>. O ETH agora é o cabeçalho ativo (colorido).",
+          );
+        }, delay);
+
+        delay += 2200;
+
+        // Rede — remove ETH, IP volta a ser ativo (colorido)
+        schedule(() => {
+          highlightLayer("net", "server");
+          const info = infoSubidaServer.net;
+          showInfo(info.title, info.text, info.protocol);
+          removeHeader("link");
+          updateStatus(
+            "Servidor — Camada 3: <strong>Remove o ETH</strong>. O IP agora é o cabeçalho ativo (colorido).",
+          );
+        }, delay);
+
+        delay += 2200;
+
+        // Transporte — remove IP, TCP volta a ser ativo (colorido)
+        schedule(() => {
+          highlightLayer("trans", "server");
+          const info = infoSubidaServer.trans;
+          showInfo(info.title, info.text, info.protocol);
+          removeHeader("net");
+          updateStatus(
+            "Servidor — Camada 4: <strong>Remove o IP</strong>. O TCP agora é o cabeçalho ativo (colorido).",
+          );
+        }, delay);
+
+        delay += 2200;
+
+        // Aplicação — remove TCP, mostra DADOS (HTTP puro)
+        schedule(() => {
+          highlightLayer("app", "server");
+          const info = infoSubidaServer.app;
+          showInfo(info.title, info.text, info.protocol);
+          removeHeader("trans");
+          // O HTTP volta a ser o "dado" visível
+          packetData.textContent = "HTTP";
+          packetData.style.background = layerColors.app + "15";
+          packetData.style.color = layerColors.app;
+          updateStatus(
+            "Servidor — Camada 5: <strong>Remove o TCP</strong>. Chegamos aos DADOS originais (HTTP)!",
+          );
+        }, delay);
+
+        delay += 2500;
+
+        // === FASE 3: SERVIDOR ENCAPSULA RESPOSTA (desce) ===
+        schedule(() => {
+          document
+            .querySelectorAll(".layer")
+            .forEach((l) => l.classList.remove("active"));
+          infoPanel.classList.remove("show");
+          setOperationLabel("📤 Encapsulamento da Resposta");
+          // Reseta para novo encapsulamento
+          layers.forEach((l) => {
+            headers[l].classList.remove("show");
+            headers[l].className = "packet-header " + l + "-inactive";
+          });
+          packetData.textContent = "DADOS";
+          packetData.style.background = "#f8fafc";
+          packetData.style.color = "var(--muted)";
+          animateServerDown();
+        }, delay);
+      }
+
+      function animateServerDown() {
+        let delay = 0;
+
+        // Aplicação — DADOS vira conteúdo da resposta
+        schedule(() => {
+          highlightLayer("app", "server");
+          const info = infoDescidaServer.app;
+          showInfo(info.title, info.text, info.protocol);
+          packetData.textContent = "RESPOSTA";
+          packetData.style.background = layerColors.app + "15";
+          packetData.style.color = layerColors.app;
+          updateStatus(
+            "Servidor — Camada 5: Prepara a <strong>resposta HTTP</strong> — novos DADOS.",
+          );
+        }, delay);
+
+        delay += 2200;
+
+        // Transporte
+        schedule(() => {
+          highlightLayer("trans", "server");
+          const info = infoDescidaServer.trans;
+          showInfo(info.title, info.text, info.protocol);
+          addHeader("app");
+          packetData.textContent = "RESPOSTA";
+          packetData.style.background = "#f8fafc";
+          packetData.style.color = "#94a3b8";
+          updateStatus(
+            'Servidor — Camada 4: Adiciona <strong>TCP</strong> (ativo). A resposta vira "dado" (cinza).',
+          );
+        }, delay);
+
+        delay += 2200;
+
+        // Rede
+        schedule(() => {
+          highlightLayer("net", "server");
+          const info = infoDescidaServer.net;
+          showInfo(info.title, info.text, info.protocol);
+          addHeader("trans");
+          updateStatus(
+            'Servidor — Camada 3: Adiciona <strong>IP</strong> (ativo). O TCP vira "dado" (cinza).',
+          );
+        }, delay);
+
+        delay += 2200;
+
+        // Enlace
+        schedule(() => {
+          highlightLayer("link", "server");
+          const info = infoDescidaServer.link;
+          showInfo(info.title, info.text, info.protocol);
+          addHeader("net");
+          updateStatus(
+            'Servidor — Camada 2: Adiciona <strong>ETH</strong> (ativo). O IP vira "dado" (cinza).',
+          );
+        }, delay);
+
+        delay += 2200;
+
+        // Física
+        schedule(() => {
+          highlightLayer("phys", "server");
+          const info = infoDescidaServer.phys;
+          showInfo(info.title, info.text, info.protocol);
+          addHeader("link");
+          addHeader("phys");
+          updateStatus(
+            'Servidor — Camada 1: Adiciona <strong>PHY</strong> (ativo). Tudo vira "dado" (cinza).',
+          );
+        }, delay);
+
+        delay += 2200;
+
+        // Transmissão de volta
+        schedule(() => {
+          document
+            .querySelectorAll(".layer")
+            .forEach((l) => l.classList.remove("active"));
+          infoPanel.classList.remove("show");
+          setOperationLabel("🌐 Resposta voltando pela Internet");
+          transArrow.innerHTML =
+            '<i class="fa-solid fa-satellite-dish"></i><span>Resposta voltando...</span><i class="fa-solid fa-arrow-left"></i>';
+          transArrow.classList.add("show");
+          updateStatus(
+            "Resposta encapsulada! Voltando pela <strong>internet</strong>...",
+          );
+        }, delay);
+
+        delay += 2500;
+
+        // === FASE 4: CLIENTE DESENCAPSULA (sobe para receber) ===
+        schedule(() => {
+          transArrow.classList.remove("show");
+          transArrow.innerHTML =
+            '<i class="fa-solid fa-satellite-dish"></i><span>Transmitindo pela Internet...</span><i class="fa-solid fa-arrow-right"></i>';
+          setOperationLabel("📥 Desencapsulamento no Cliente");
+          animateClientUp();
+        }, delay);
+      }
+
+      function animateClientUp() {
+        let delay = 0;
+
+        // Física — PHY é o cabeçalho ativo na chegada
+        schedule(() => {
+          highlightLayer("phys", "client");
+          const info = infoSubidaClient.phys;
+          showInfo(info.title, info.text, info.protocol);
+          updateStatus(
+            "Seu iPad — Camada 1: Recebe sinais. O PHY é o <strong>cabeçalho ativo</strong> (colorido).",
+          );
+        }, delay);
+
+        delay += 2200;
+
+        // Enlace — remove PHY, ETH volta ativo
+        schedule(() => {
+          highlightLayer("link", "client");
+          const info = infoSubidaClient.link;
+          showInfo(info.title, info.text, info.protocol);
+          removeHeader("phys");
+          updateStatus(
+            "Seu iPad — Camada 2: <strong>Remove o PHY</strong>. O ETH é o cabeçalho ativo (colorido).",
+          );
+        }, delay);
+
+        delay += 2200;
+
+        // Rede — remove ETH, IP volta ativo
+        schedule(() => {
+          highlightLayer("net", "client");
+          const info = infoSubidaClient.net;
+          showInfo(info.title, info.text, info.protocol);
+          removeHeader("link");
+          updateStatus(
+            "Seu iPad — Camada 3: <strong>Remove o ETH</strong>. O IP é o cabeçalho ativo (colorido).",
+          );
+        }, delay);
+
+        delay += 2200;
+
+        // Transporte — remove IP, TCP volta ativo
+        schedule(() => {
+          highlightLayer("trans", "client");
+          const info = infoSubidaClient.trans;
+          showInfo(info.title, info.text, info.protocol);
+          removeHeader("net");
+          updateStatus(
+            "Seu iPad — Camada 4: <strong>Remove o IP</strong>. O TCP é o cabeçalho ativo (colorido).",
+          );
+        }, delay);
+
+        delay += 2200;
+
+        // Aplicação — remove TCP, mostra DADOS (resposta pura)
+        schedule(() => {
+          highlightLayer("app", "client");
+          const info = infoSubidaClient.app;
+          showInfo(info.title, info.text, info.protocol);
+          removeHeader("trans");
+          packetData.textContent = "PÁGINA";
+          packetData.style.background = layerColors.app + "15";
+          packetData.style.color = layerColors.app;
+          updateStatus(
+            "Seu iPad — Camada 5: <strong>Remove o TCP</strong>. Chegamos aos DADOS! 🎉",
+          );
+        }, delay);
+
+        delay += 2500;
+
+        // Final
+        schedule(() => {
+          document
+            .querySelectorAll(".layer")
+            .forEach((l) => l.classList.remove("active"));
+          infoPanel.classList.remove("show");
+          setOperationLabel("✅ Concluído");
+          packetData.textContent = "✓ PÁGINA";
+          packetData.style.background = "#dcfce7";
+          packetData.style.color = "#166534";
+          takeaway.classList.add("show");
+          btnReset.disabled = false;
+          isRunning = false;
+          updateStatus(
+            "A página foi carregada! O ciclo <strong>encapsular → transmitir → desencapsular</strong> está completo.",
+          );
+        }, delay);
+      }
+
+      // ===== CONTROLES =====
+      btnSend.addEventListener("click", () => {
+        if (isRunning) return;
+        clearAllTimers();
+        startSimulation();
+      });
+
+      btnReset.addEventListener("click", () => {
+        clearAllTimers();
+        isRunning = false;
+        btnSend.disabled = false;
+        btnReset.disabled = true;
+        takeaway.classList.remove("show");
+        infoPanel.classList.remove("show");
+        document
+          .querySelectorAll(".layer")
+          .forEach((l) => l.classList.remove("active"));
+        resetPacket();
+        setOperationLabel("Aguardando...");
+        updateStatus(
+          'Pronto. Clique em <strong>"Enviar requisição"</strong> para ver o encapsulamento!',
+        );
+      });
+
+      // Velocidade
+      document.querySelectorAll("[data-speed]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          speed = Number(btn.dataset.speed);
+          document
+            .querySelectorAll("[data-speed]")
+            .forEach((b) => b.classList.remove("selected"));
+          btn.classList.add("selected");
+          updateStatus(
+            `Velocidade ajustada para <strong>${btn.textContent}</strong>.`,
+          );
+        });
+      });
+    </script>
+  </body>
+</html>
