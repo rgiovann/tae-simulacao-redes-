@@ -33,11 +33,14 @@
       .packet { opacity:0; pointer-events:none; filter:drop-shadow(0 5px 6px rgba(190,24,93,.28)); transition:opacity .2s; } .packet.visible { opacity:1; }
       .packet rect { fill:#f43f5e; stroke:#fff; stroke-width:2; } .packet text { fill:#fff; font-size:11px; font-weight:900; text-anchor:middle; dominant-baseline:middle; }
       .status { min-height:28px; margin:18px 32px 0; color:#415670; font-size:.92rem; text-align:center; }
-      .controls { display:flex; justify-content:center; padding:4px 32px 24px; }
-      button { border:0; border-radius:12px; padding:13px 22px; background:var(--indigo); color:#fff; font:700 .96rem inherit; cursor:pointer; box-shadow:0 6px 16px rgba(79,70,229,.28); transition:.2s; } button:hover:not(:disabled) { transform:translateY(-2px); background:#4338ca; } button:disabled { cursor:not-allowed; background:#94a3b8; box-shadow:none; }
+      .learning { margin:0 32px 14px; padding:16px; border:1px solid #dbeafe; border-radius:15px; background:#f8fbff; } .learning h2 { margin:0; font-size:.92rem; } .prediction { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; } .prediction-options,.speed { display:flex; gap:7px; flex-wrap:wrap; }
+      .choice,.speed button { padding:7px 11px; border:1px solid #cbd5e1; border-radius:9px; background:#fff; box-shadow:none; color:#42566f; font-size:.78rem; } .choice:hover:not(:disabled),.speed button:hover:not(:disabled),.choice.selected,.speed button.selected { background:#e0e7ff; border-color:#818cf8; color:#3730a3; transform:none; }
+      .packet-board { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:14px; } .packet-state { padding:10px; border:1px solid #e0e9f3; border-radius:10px; background:#fff; } .packet-state strong { display:block; color:#263e5a; font-size:.8rem; } .packet-state small { display:block; margin-top:3px; color:#718198; font-size:.72rem; } .packet-state span { display:block; margin-top:7px; color:#64748b; font-size:.73rem; font-weight:700; } .packet-state.moving { border-color:#7dd3fc; background:#f0f9ff; } .packet-state.arrived { border-color:#a5b4fc; background:#eef2ff; } .packet-state.arrived span { color:#4338ca; }
+      .controls { display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap; padding:4px 32px 24px; }
+      button { border:0; border-radius:12px; padding:13px 22px; background:var(--indigo); color:#fff; font:700 .96rem inherit; cursor:pointer; box-shadow:0 6px 16px rgba(79,70,229,.28); transition:.2s; } button:hover:not(:disabled) { transform:translateY(-2px); background:#4338ca; } button:disabled { cursor:not-allowed; background:#94a3b8; box-shadow:none; } .secondary { padding:11px 14px; background:#fff; border:1px solid #cbd5e1; color:#415670; box-shadow:none; }
       .buffer { padding:22px 32px 30px; background:#fbfcfe; border-top:1px solid #e8eef5; } .buffer-head { display:flex; align-items:center; justify-content:space-between; gap:12px; } .buffer h2 { margin:0; font-size:1rem; } .buffer small { color:var(--muted); }
-      .slots { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:14px; } .slot { min-height:60px; display:grid; place-items:center; border:2px dashed #cbd5e1; border-radius:12px; color:#94a3b8; font-weight:800; background:#fff; transition:.25s; } .slot.filled { border-style:solid; border-color:#818cf8; background:#eef2ff; color:#3730a3; box-shadow:0 3px 9px rgba(79,70,229,.14); }
-      @media (max-width:600px) { body { padding:10px; } .card { border-radius:18px; } header { padding:22px 20px 12px; } .legend,.status,.controls,.buffer { margin-left:0; margin-right:0; padding-left:20px; padding-right:20px; } .network-panel { margin:0 8px; } svg { min-height:230px; } .endpoint text { font-size:12px; } .node text,.route-label { font-size:10px; } }
+      .slots { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:14px; } .slot { min-height:60px; display:grid; place-items:center; border:2px dashed #cbd5e1; border-radius:12px; color:#94a3b8; font-weight:800; background:#fff; transition:.25s; } .slot.filled { border-style:solid; border-color:#fda4af; background:#fff1f2; color:#be123c; } .slot.ordered { border-color:#818cf8; background:#eef2ff; color:#3730a3; box-shadow:0 3px 9px rgba(79,70,229,.14); } .reconstruction { display:none; margin:14px 0 0; padding:10px; border-radius:10px; background:#ecfdf5; color:#047857; text-align:center; font-size:.85rem; font-weight:800; } .reconstruction.show { display:block; animation:appear .35s ease-out; } @keyframes appear { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:none; } }
+      @media (max-width:600px) { body { padding:10px; } .card { border-radius:18px; } header { padding:22px 20px 12px; } .legend,.status,.controls,.buffer { margin-left:0; margin-right:0; padding-left:20px; padding-right:20px; } .learning { margin-left:20px; margin-right:20px; } .network-panel { margin:0 8px; } svg { min-height:230px; } .endpoint text { font-size:12px; } .node text,.route-label { font-size:10px; } .packet-board { grid-template-columns:1fr; } }
     </style>
   </head>
   <body>
@@ -63,8 +66,16 @@
         </svg>
       </section>
       <p id="status" class="status" aria-live="polite">Pronto para iniciar o download.</p>
-      <div class="controls"><button id="btn" type="button"><i class="fa-solid fa-download"></i> Baixar foto (3 pacotes)</button></div>
-      <section class="buffer"><div class="buffer-head"><h2><i class="fa-solid fa-memory"></i> Buffer do iPad</h2><small>Reorganiza os pacotes antes de abrir a foto</small></div><div class="slots"><div id="s1" class="slot">—</div><div id="s2" class="slot">—</div><div id="s3" class="slot">—</div></div></section>
+      <section class="learning" aria-label="Painel de acompanhamento">
+        <div class="prediction"><h2>Antes de começar: qual pacote chegará primeiro?</h2><div class="prediction-options"><button class="choice" data-prediction="P1" type="button">P1</button><button class="choice" data-prediction="P2" type="button">P2</button><button class="choice" data-prediction="P3" type="button">P3</button></div></div>
+        <div class="packet-board">
+          <article id="card-p1" class="packet-state"><strong>P1 · rota alternativa</strong><small>4 saltos: R4, R5, R6 e R7</small><span>Aguardando saída</span></article>
+          <article id="card-p2" class="packet-state"><strong>P2 · rota rápida</strong><small>3 saltos: R1, R2 e R3</small><span>Aguardando saída</span></article>
+          <article id="card-p3" class="packet-state"><strong>P3 · rota alternativa</strong><small>4 saltos: R4, R5, R6 e R7</small><span>Aguardando saída</span></article>
+        </div>
+      </section>
+      <div class="controls"><button id="btn" type="button"><i class="fa-solid fa-download"></i> Baixar foto (3 pacotes)</button><button id="repeat" class="secondary" type="button" disabled><i class="fa-solid fa-rotate-right"></i> Repetir</button><div class="speed" aria-label="Velocidade da simulação"><button class="selected" data-speed="1" type="button">1×</button><button data-speed="0.5" type="button">0,5×</button><button data-speed="2" type="button">2×</button></div></div>
+      <section class="buffer"><div class="buffer-head"><h2><i class="fa-solid fa-memory"></i> Buffer do iPad</h2><small>Recebe os pacotes e os organiza antes de abrir a foto</small></div><div class="slots"><div id="s1" class="slot">Vazio</div><div id="s2" class="slot">Vazio</div><div id="s3" class="slot">Vazio</div></div><div id="reconstruction" class="reconstruction">Imagem reconstruída: P1 → P2 → P3</div></section>
     </main>
     <script>
       const network = document.getElementById('network');
@@ -80,7 +91,91 @@
         animatePacket('p1','slow',1400,5200,() => status.textContent = 'P1 escolheu a rota alternativa, com mais saltos.',() => arrived('P1'));
         animatePacket('p3','slow',2400,6100,() => status.textContent = 'P3 também está na rota alternativa e encontra mais trânsito.',() => arrived('P3'));
       }
-      btn.addEventListener('click', simularDownload);
+      const repeatBtn = document.getElementById('repeat');
+      const reconstruction = document.getElementById('reconstruction');
+      const speedButtons = document.querySelectorAll('[data-speed]');
+      const choices = document.querySelectorAll('[data-prediction]');
+      let speed = 1;
+      let prediction = '';
+      let runTimers = [];
+      let runFrames = [];
+
+      function updatePacketCard(packet, message, state) {
+        const card = document.getElementById(`card-${packet.toLowerCase()}`);
+        card.className = `packet-state ${state || ''}`;
+        card.querySelector('span').textContent = message;
+      }
+
+      function resetLearningSimulation() {
+        runTimers.forEach(clearTimeout);
+        runFrames.forEach(cancelAnimationFrame);
+        runTimers = [];
+        runFrames = [];
+        document.querySelectorAll('.packet').forEach(packet => { packet.classList.remove('visible'); packet.removeAttribute('transform'); });
+        document.querySelectorAll('.route').forEach(path => path.classList.remove('active'));
+        ['s1', 's2', 's3'].forEach(id => { const slot = document.getElementById(id); slot.className = 'slot'; slot.textContent = 'Vazio'; });
+        reconstruction.classList.remove('show');
+        ['P1', 'P2', 'P3'].forEach(packet => updatePacketCard(packet, 'Aguardando saída', ''));
+      }
+
+      function schedule(callback, delay) { runTimers.push(setTimeout(callback, delay / speed)); }
+
+      function animateLearningPacket(id, route, delay, duration, onStart, onFinish) {
+        const packet = document.getElementById(id);
+        const path = paths[route];
+        schedule(() => {
+          packet.classList.add('visible');
+          path.classList.add('active');
+          onStart();
+          const started = performance.now();
+          function step(now) {
+            const progress = Math.min((now - started) / (duration / speed), 1);
+            positionPacket(packet, path, progress);
+            if (progress < 1) runFrames.push(requestAnimationFrame(step));
+            else onFinish();
+          }
+          runFrames.push(requestAnimationFrame(step));
+        }, delay);
+      }
+
+      function simularDownloadV2() {
+        resetLearningSimulation();
+        btn.disabled = true;
+        repeatBtn.disabled = true;
+        status.textContent = prediction ? `Previsão registrada: ${prediction}. Agora observe os caminhos.` : 'Observe os caminhos e a ordem de chegada dos pacotes.';
+        let arrivals = [];
+        const arrived = (packet) => {
+          arrivals.push(packet);
+          const slot = document.getElementById(`s${arrivals.length}`);
+          slot.textContent = `${packet} aguardando`;
+          slot.className = 'slot filled';
+          updatePacketCard(packet, 'Chegou ao buffer', 'arrived');
+          if (arrivals.length < 3) {
+            status.textContent = `${packet} chegou, mas ainda aguarda os outros pacotes no buffer.`;
+            return;
+          }
+          status.textContent = 'Todos chegaram. O iPad está reorganizando os pacotes na ordem correta...';
+          schedule(() => {
+            ['P1', 'P2', 'P3'].forEach((packet, index) => {
+              const slot = document.getElementById(`s${index + 1}`);
+              slot.textContent = packet;
+              slot.className = 'slot ordered';
+            });
+            reconstruction.classList.add('show');
+            status.textContent = 'Conclusão: pacotes podem chegar fora de ordem; o buffer os reorganiza para abrir a foto.';
+            btn.disabled = false;
+            repeatBtn.disabled = false;
+          }, 650);
+        };
+        animateLearningPacket('p2', 'fast', 700, 3300, () => { updatePacketCard('P2', 'Em trânsito pela rota rápida', 'moving'); status.textContent = 'P2 está passando por R1, R2 e R3: três saltos.'; }, () => arrived('P2'));
+        animateLearningPacket('p1', 'slow', 1400, 5200, () => { updatePacketCard('P1', 'Em trânsito pela rota alternativa', 'moving'); status.textContent = 'P1 escolheu a rota alternativa, com quatro saltos.'; }, () => arrived('P1'));
+        animateLearningPacket('p3', 'slow', 2400, 6100, () => { updatePacketCard('P3', 'Em trânsito pela rota alternativa', 'moving'); status.textContent = 'P3 também segue pela rota alternativa.'; }, () => arrived('P3'));
+      }
+
+      choices.forEach(choice => choice.addEventListener('click', () => { prediction = choice.dataset.prediction; choices.forEach(item => item.classList.toggle('selected', item === choice)); status.textContent = `Previsão registrada: ${prediction}. Clique em “Baixar foto” para conferir.`; }));
+      speedButtons.forEach(speedButton => speedButton.addEventListener('click', () => { speed = Number(speedButton.dataset.speed); speedButtons.forEach(item => item.classList.toggle('selected', item === speedButton)); status.textContent = `Velocidade ajustada para ${speedButton.textContent}.`; }));
+      btn.addEventListener('click', simularDownloadV2);
+      repeatBtn.addEventListener('click', simularDownloadV2);
     </script>
   </body>
 </html>
