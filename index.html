@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Simuladores TAE CSJ</title>
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        background: #f5f7fa;
+      }
+
+      .hero {
+        background: #cbd5dc;
+        color: #1f2937;
+        padding: 3rem 0;
+        margin-bottom: 3rem;
+        border-radius: 16px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+      }
+
+      .hero-logo {
+        height: 80px;
+        width: auto;
+        object-fit: contain;
+        margin-bottom: 1rem;
+      }
+
+      .hero h1 {
+        font-weight: 700;
+      }
+
+      .hero p {
+        font-size: 1.15rem;
+        font-weight: 500;
+        color: #1f2937;
+        max-width: 850px;
+        margin: 0 auto;
+      }
+
+      .sim-card {
+        transition: all 0.2s ease;
+        border: 1px solid #d1dbe3;
+        border-radius: 16px;
+        background: #eef4f7;
+      }
+
+      .sim-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+      }
+
+      .sim-titulo {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1e40af;
+      }
+
+      .sim-texto {
+        color: #475569;
+        min-height: 70px;
+      }
+
+      .btn-primary {
+        background-color: #2563eb;
+        border-color: #2563eb;
+      }
+
+      .btn-primary:hover {
+        background-color: #1d4ed8;
+        border-color: #1d4ed8;
+      }
+
+      .btn-outline-primary {
+        color: #2563eb;
+        border-color: #2563eb;
+      }
+
+      .btn-outline-primary:hover {
+        background-color: #2563eb;
+        border-color: #2563eb;
+      }
+
+      .content-area {
+        background: #e8f0f4;
+        padding: 2rem;
+        border-radius: 16px;
+        margin-bottom: 2rem;
+      }
+
+      .footer {
+        margin-top: 4rem;
+        padding: 2rem 0;
+        color: #6c757d;
+        text-align: center;
+        border-top: 1px solid #dee2e6;
+      }
+
+      .icone {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Cabeçalho -->
+
+    <section class="hero">
+      <div class="container text-center">
+        <h1>Simuladores TAE CSJ</h1>
+
+        <img src="image/logo_csj_header.png" alt="Logo CSJ" class="hero-logo" />
+
+        <p>
+          Tecnologia Aplicada à Educação • Simuladores interativos para
+          aprendizagem de conceitos computacionais, redes, programação e
+          sistemas digitais.
+        </p>
+      </div>
+    </section>
+
+    <!-- Conteúdo -->
+
+    <div class="container content-area">
+      <div class="row g-4">
+        <!-- Simulador TCP/IP -->
+
+        <div class="col-md-6 col-lg-4">
+          <div class="card sim-card shadow-sm h-100">
+            <div class="card-body text-center">
+              <div class="icone">🌐📦</div>
+
+              <div class="sim-titulo">Tráfego de Pacotes TCP/IP</div>
+
+              <p class="sim-texto">
+                Simule o envio de dados em uma rede, acompanhando a criação dos
+                pacotes, endereçamento IP, transmissão e entrega entre
+                dispositivos.
+              </p>
+
+              <a href="simulador_tcpip.html" class="btn btn-outline-primary">
+                Acessar
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Camadas TCP/IP -->
+
+        <div class="col-md-6 col-lg-4">
+          <div class="card sim-card shadow-sm h-100">
+            <div class="card-body text-center">
+              <div class="icone">🖥️🔗</div>
+
+              <div class="sim-titulo">Camadas TCP/IP</div>
+
+              <p class="sim-texto">
+                Visualize como as camadas do modelo TCP/IP trabalham juntas,
+                como os dados são encapsulados e como a comunicação acontece.
+              </p>
+
+              <a href="camadas_tcpip.html" class="btn btn-outline-primary">
+                Acessar
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Espaço para novos simuladores -->
+
+        <!--
+
+        <div class="col-md-6 col-lg-4">
+
+          <div class="card sim-card shadow-sm h-100">
+
+            <div class="card-body text-center">
+
+              <div class="icone">
+                🚀
+              </div>
+
+              <div class="sim-titulo">
+                Novo Simulador
+              </div>
+
+              <p class="sim-texto">
+                Descrição do próximo simulador TAE.
+              </p>
+
+              <a
+                href="#"
+                class="btn btn-outline-primary"
+              >
+                Acessar
+              </a>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        -->
+      </div>
+
+      <div class="footer">
+        Simuladores TAE CSJ • Tecnologia Aplicada à Educação
+      </div>
+    </div>
+  </body>
+</html>
