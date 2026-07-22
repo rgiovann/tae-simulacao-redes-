@@ -2,13 +2,12 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>TCP/IP Simulator v2.0</title>
 
     <style>
       /* ===========================================================
-   TCP/IP SIMULATOR v2.0
-   PARTE 1: Layout base
+   TCP/IP SIMULATOR v2.0 - RESPONSIVO E OTIMIZADO PARA IPAD / TABLETS
    =========================================================== */
 
       :root {
@@ -22,9 +21,6 @@
         --internet: #4a5568;
         --shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
         --radius: 14px;
-        --transition: 0.35s;
-        --packet-max-width: 520px;
-        --layer-spacing: 14px;
         --transition-speed: 0.8s;
       }
 
@@ -35,10 +31,11 @@
       }
 
       body {
-        font-family: "Segoe UI", Arial, sans-serif;
+        font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
         background: var(--bg);
         color: var(--text);
         height: 100vh;
+        height: 100dvh; /* Garante altura real correta no Safari iOS/iPadOS */
         overflow: hidden;
       }
 
@@ -51,42 +48,46 @@
       header {
         background: white;
         border-bottom: 1px solid var(--panel-border);
-        padding: 18px 26px;
+        padding: 12px 20px;
         display: flex;
         justify-content: space-between;
         align-items: center;
+        flex-shrink: 0;
       }
 
       header h1 {
-        font-size: 22px;
+        font-size: clamp(16px, 2vw, 22px);
         font-weight: 600;
       }
 
       header small {
         color: var(--text-light);
+        display: block;
+        font-size: 12px;
       }
 
       /* TOOLBAR & CONTROLES */
 
       #toolbar {
         display: flex;
-        gap: 12px;
+        gap: 8px;
         align-items: center;
       }
 
       button {
-        padding: 10px 18px;
+        padding: 8px 14px;
         border: none;
-        border-radius: 10px;
+        border-radius: 8px;
         cursor: pointer;
         transition: 0.25s;
         background: #e2e8f0;
         font-weight: 600;
+        font-size: 13px;
         color: var(--text);
+        white-space: nowrap;
       }
 
       button:hover {
-        transform: translateY(-2px);
         background: #cbd5e1;
       }
 
@@ -110,48 +111,38 @@
       }
 
       /* ==========================================================
-   RESTRUTURAÇÃO DO LAYOUT (PAINEL INFORMAÇÕES EMBALADO ABAIXO)
+   LAYOUT GRID DINÂMICO COM CONTAINER QUERIES
    ========================================================== */
 
       main {
         flex: 1;
         display: grid;
-        /* Cria 3 colunas superiores e 2 linhas (linha 1: simulação, linha 2: informações) */
-        grid-template-columns: 260px 1fr 260px;
+        grid-template-columns: minmax(180px, 220px) minmax(300px, 1fr) minmax(180px, 220px);
         grid-template-rows: 1fr auto;
         grid-template-areas:
           "client simulation server"
           "info   info       info";
-        gap: 20px;
-        padding: 20px;
-        overflow: hidden; /* Evita rolagens desnecessárias na tela */
+        gap: 12px;
+        padding: 12px;
+        overflow: hidden;
+        min-height: 0; /* Impede estouro de flex/grid */
       }
 
-      /* Atribui cada elemento para sua respectiva área no Grid */
-      #clientPanel {
-        grid-area: client;
-      }
-
-      #simulationArea {
-        grid-area: simulation;
-      }
-
-      #serverPanel {
-        grid-area: server;
-      }
+      #clientPanel { grid-area: client; }
+      #simulationArea { grid-area: simulation; }
+      #serverPanel { grid-area: server; }
 
       #infoPanel {
         grid-area: info;
         display: flex;
-        flex-direction: row; /* Muda os blocos de informação de Vertical para Horizontal */
+        flex-direction: row;
         justify-content: space-between;
         align-items: stretch;
       }
 
-      /* Transforma os blocos internos de informação em colunas horizontais */
       .infoBlock {
         flex: 1;
-        padding: 14px 18px;
+        padding: 10px 14px;
         border-bottom: none;
         border-right: 1px solid var(--panel-border);
       }
@@ -161,15 +152,16 @@
       }
 
       .infoTitle {
-        font-size: 13px;
+        font-size: 11px;
+        font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        margin-bottom: 4px;
+        margin-bottom: 2px;
       }
 
       .infoValue {
-        font-size: 14px;
-        line-height: 1.4em;
+        font-size: 13px;
+        line-height: 1.3em;
       }
 
       .panel {
@@ -177,88 +169,78 @@
         border: 1px solid var(--panel-border);
         border-radius: var(--radius);
         box-shadow: var(--shadow);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        transition: box-shadow 0.35s ease, border-color 0.35s ease;
       }
 
       .panelTitle {
-        padding: 18px;
-        font-size: 18px;
+        padding: 12px 16px;
+        font-size: 15px;
         font-weight: 600;
         border-bottom: 1px solid var(--panel-border);
       }
 
-      /* ==========================================================
-PARTE 9: DESTAQUE DE ATOR ATIVO (CLIENTE / SERVIDOR)
-========================================================== */
-
-      .panel {
-        transition:
-          box-shadow 0.35s ease,
-          border-color 0.35s ease;
-      }
-
       .panel.active-actor-client {
         border-color: var(--client);
-        box-shadow:
-          0 0 0 4px rgba(43, 108, 176, 0.25),
-          var(--shadow);
+        box-shadow: 0 0 0 3px rgba(43, 108, 176, 0.25), var(--shadow);
       }
 
       .panel.active-actor-server {
         border-color: var(--server);
-        box-shadow:
-          0 0 0 4px rgba(197, 48, 48, 0.25),
-          var(--shadow);
+        box-shadow: 0 0 0 3px rgba(197, 48, 48, 0.25), var(--shadow);
       }
 
-      .clientTitle {
-        background: var(--client);
-        color: white;
-      }
-
-      .serverTitle {
-        background: var(--server);
-        color: white;
-      }
+      .clientTitle { background: var(--client); color: white; }
+      .serverTitle { background: var(--server); color: white; }
 
       .layerList {
-        padding: 20px;
+        padding: 12px;
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: 8px;
+        flex: 1;
+        justify-content: space-around;
       }
 
       .layer {
         background: #f8fafc;
         border: 1px solid #cbd5e0;
-        border-radius: 10px;
-        padding: 14px;
+        border-radius: 8px;
+        padding: 8px 10px;
+        font-size: 12px;
+        font-weight: 600;
         transition: 0.35s;
+        text-align: center;
       }
 
       .layer.active {
         background: #bee3f8;
         border-color: #3182ce;
-        transform: scale(1.03);
+        transform: scale(1.02);
       }
 
       #simulationArea {
         display: flex;
         flex-direction: column;
-        gap: 20px;
+        gap: 10px;
+        min-height: 0;
       }
 
       #statusBar {
         background: white;
         border: 1px solid var(--panel-border);
         border-radius: var(--radius);
-        padding: 18px;
-        font-size: 18px;
+        padding: 10px 14px;
+        font-size: 14px;
+        font-weight: 600;
         text-align: center;
         box-shadow: var(--shadow);
       }
 
       /* ==========================================================
-   PARTE DE MOVIMENTO E NUVEM INTERNET (FOTO 1536x1024)
+   ÁREA DA INTERNET E PALCO DO PACOTE (RESPONSIVO)
    ========================================================== */
 
       #internet {
@@ -269,19 +251,22 @@ PARTE 9: DESTAQUE DE ATOR ATIVO (CLIENTE / SERVIDOR)
         position: relative;
         width: 100%;
         height: 100%;
+        overflow: hidden;
       }
 
-      /* Imagem da Nuvem Internet centralizada */
+      /* Imagem da Nuvem ajustada com max-width/height dinâmicos */
       #internet::before {
         content: "";
         position: absolute;
-        width: 700px; /* Largura expandida para acompanhar a altura */
-        height: 519px; /* Altura aumentada em 50% (346px + 50%) */
-        background-image: url("../images/7c41fd02-edf3-4815-a115-d3892764c74b.png");
+        width: 90%;
+        height: 90%;
+        max-width: 550px;
+        max-height: 380px;
+        background-image: url("images/7c41fd02-edf3-4815-a115-d3892764c74b.png");
         background-size: contain;
         background-repeat: no-repeat;
         background-position: center;
-        mix-blend-mode: multiply; /* <--- Faz o fundo branco da foto sumir e mesclar com o simulador */
+        mix-blend-mode: multiply;
         z-index: 1;
         pointer-events: none;
       }
@@ -293,22 +278,22 @@ PARTE 9: DESTAQUE DE ATOR ATIVO (CLIENTE / SERVIDOR)
         justify-content: center;
         align-items: center;
         position: relative;
-        z-index: 2; /* Garante que o pacote fique por cima da imagem */
+        z-index: 2;
       }
 
-      /* POSICIONAMENTOS NO ESPAÇO DA SIMULAÇÃO (ÚNICO E LIMPO) */
+      /* MOVIMENTO CALCULADO DINAMICAMENTE EM CSS COM BASE NA LARGURA DO STAGE */
       #packetRoot {
-        min-width: 240px;
-        min-height: 140px;
         display: flex;
         justify-content: center;
         align-items: center;
         position: relative;
-        transition: transform var(--transition-speed, 0.8s) ease-in-out;
+        transition: transform var(--transition-speed, 0.8s) cubic-bezier(0.4, 0, 0.2, 1);
+        will-change: transform;
       }
 
+      /* As posições agora utilizam porcentagem da largura do container do palco */
       #packetRoot.pos-client {
-        transform: translateX(-520px) !important;
+        transform: translateX(calc(-50cqw + 50% + 10px)) !important;
       }
 
       #packetRoot.pos-center {
@@ -316,11 +301,21 @@ PARTE 9: DESTAQUE DE ATOR ATIVO (CLIENTE / SERVIDOR)
       }
 
       #packetRoot.pos-server {
-        transform: translateX(520px) !important;
+        transform: translateX(calc(50cqw - 50% - 10px)) !important;
+      }
+
+      /* Caso cqw não seja totalmente suportado, fallback relativo */
+      @supports not (transform: translateX(1cqw)) {
+        #packetRoot.pos-client { transform: translateX(-35vw) !important; }
+        #packetRoot.pos-server { transform: translateX(35vw) !important; }
+      }
+
+      #simulationArea {
+        container-type: inline-size; /* Ativa Container Queries para precisão absoluta */
       }
 
       /* ==========================================================
-   PARTE 2 & 6: PACOTE DINÂMICO, ENVELOPES E ANIMAÇÕES
+   PACOTE E ENVELOPES RESPONSIVOS (FLUID ENCAPSULATION)
    ========================================================== */
 
       .packet-layer {
@@ -328,22 +323,16 @@ PARTE 9: DESTAQUE DE ATOR ATIVO (CLIENTE / SERVIDOR)
         justify-content: center;
         align-items: center;
         position: relative;
-        border-radius: 10px;
+        border-radius: 8px;
         transition: all var(--transition-speed) ease;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
       }
 
-      .packet-content {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
-
       .layer-header {
         position: absolute;
-        top: 4px;
-        left: 10px;
-        font-size: 10px;
+        top: 2px;
+        left: 6px;
+        font-size: 9px;
         font-weight: 700;
         letter-spacing: 0.3px;
         text-transform: uppercase;
@@ -351,211 +340,115 @@ PARTE 9: DESTAQUE DE ATOR ATIVO (CLIENTE / SERVIDOR)
         pointer-events: none;
       }
 
-      .layer-header-http {
-        left: 22px;
-        color: #b794f4;
-        top: 4px;
-      }
+      /* Escalonamento proporcional com CSS fluid */
+      .layer-size-0 { width: clamp(100px, 18cqw, 140px); height: clamp(36px, 8cqh, 48px); }
+      .layer-size-1 { width: clamp(120px, 22cqw, 170px); height: clamp(52px, 11cqh, 72px); }
+      .layer-size-2 { width: clamp(140px, 26cqw, 200px); height: clamp(68px, 14cqh, 96px); }
+      .layer-size-3 { width: clamp(160px, 30cqw, 235px); height: clamp(84px, 17cqh, 120px); }
+      .layer-size-4 { width: clamp(180px, 34cqw, 270px); height: clamp(100px, 20cqh, 150px); }
+      .layer-size-5 { width: clamp(200px, 38cqw, 310px); height: clamp(116px, 23cqh, 180px); }
 
-      .layer-header-tcp {
-        left: 18px;
-        top: 1px;
-        color: #63b3ed;
-      }
+      .layer-http { background: #ede9fe; border: 2px solid #7c3aed; }
+      .layer-http > .layer-header { color: #6d28d9; }
 
-      .layer-header-ip {
-        left: 14px;
-        color: #48bb78;
-        top: 4px;
-      }
+      .layer-tcp { background: #cffafe; border: 2px solid #0891b2; }
+      .layer-tcp > .layer-header { color: #0e7490; }
 
-      .layer-header-eth {
-        left: 10px;
-        color: #dd8a00;
-        top: 4px;
-      }
+      .layer-ip { background: #dcfce7; border: 2px solid #16a34a; }
+      .layer-ip > .layer-header { color: #166534; }
 
-      .layer-header-phy {
-        left: 6px;
-        color: #64748b;
-        top: 4px;
-      }
+      .layer-eth { background: #fef3c7; border: 2px solid #d97706; }
+      .layer-eth > .layer-header { color: #92400e; }
 
-      .layer-size-0 {
-        width: 160px;
-        height: 60px;
-      }
-
-      .layer-size-1 {
-        width: 195px;
-        height: 88px;
-      }
-
-      .layer-size-2 {
-        width: 235px;
-        height: 120px;
-      }
-
-      .layer-size-3 {
-        width: 285px;
-        height: 160px;
-      }
-
-      .layer-size-4 {
-        width: 340px;
-        height: 205px;
-      }
-
-      .layer-size-5 {
-        width: 405px;
-        height: 255px;
-      }
-
-      .layer-http {
-        background: #ede9fe;
-        border: 3px solid #7c3aed;
-      }
-      .layer-http > .layer-header {
-        color: #6d28d9;
-      }
-
-      .layer-tcp {
-        background: #cffafe;
-        border: 3px solid #0891b2;
-      }
-      .layer-tcp > .layer-header {
-        color: #0e7490;
-      }
-
-      .layer-ip {
-        background: #dcfce7;
-        border: 3px solid #16a34a;
-      }
-      .layer-ip > .layer-header {
-        color: #166534;
-      }
-
-      .layer-eth {
-        background: #fef3c7;
-        border: 3px solid #d97706;
-      }
-      .layer-eth > .layer-header {
-        color: #92400e;
-      }
-
-      .layer-phy {
-        background: #fee2e2;
-        border: 3px solid #dc2626;
-      }
-      .layer-phy > .layer-header {
-        color: #991b1b;
-      }
+      .layer-phy { background: #fee2e2; border: 2px solid #dc2626; }
+      .layer-phy > .layer-header { color: #991b1b; }
 
       .packet-data {
-        width: 140px;
-        height: 50px;
-        border-radius: 8px;
+        width: clamp(90px, 14cqw, 120px);
+        height: clamp(28px, 6cqh, 38px);
+        border-radius: 6px;
         background: white;
-        border: 2px dashed #94a3b8;
+        border: 1px dashed #94a3b8;
         display: flex;
         justify-content: center;
         align-items: center;
         font-weight: 600;
-        font-size: 14px;
+        font-size: clamp(10px, 1.2cqw, 12px);
         color: #334155;
-        box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.05);
+        box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.05);
+        text-align: center;
+        padding: 2px;
       }
 
       .packet-layer.active {
-        transform: scale(1.02);
-        box-shadow:
-          0 0 0 5px rgba(59, 130, 246, 0.25),
-          0 16px 40px rgba(0, 0, 0, 0.18);
+        transform: scale(1.01);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25), 0 8px 20px rgba(0, 0, 0, 0.15);
         z-index: 100;
       }
 
       .packet-layer.inactive {
-        opacity: 0.75;
+        opacity: 0.85;
       }
 
-      /* ANIMAÇÕES NATIVAS RESTRITAS (Fade, Grow, Move, Highlight) */
-      .anim-grow {
-        animation: animGrow 0.4s ease-out;
-      }
-      .anim-fade {
-        animation: animFade 0.4s ease-out;
-      }
-      .anim-highlight {
-        animation: animHighlight 0.6s infinite alternate;
-      }
-
-      .move-right {
-        transform: translateX(240px);
-      }
-      .move-left {
-        transform: translateX(-240px);
-      }
+      /* ANIMAÇÕES NATIVAS RESTRITAS */
+      .anim-grow { animation: animGrow 0.4s ease-out; }
+      .anim-fade { animation: animFade 0.4s ease-out; }
 
       @keyframes animGrow {
-        from {
-          transform: scale(0.6);
-          opacity: 0;
-        }
-        to {
-          transform: scale(1);
-          opacity: 1;
-        }
+        from { transform: scale(0.6); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
       }
 
       @keyframes animFade {
-        from {
-          opacity: 0;
-        }
-        to {
-          opacity: 1;
-        }
-      }
-
-      @keyframes animHighlight {
-        from {
-          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-        }
-        to {
-          box-shadow: 0 0 0 8px rgba(59, 130, 246, 0.6);
-        }
-      }
-
-      #infoPanel {
-        display: flex;
-        flex-direction: column;
-      }
-
-      .infoBlock {
-        padding: 20px;
-        border-bottom: 1px solid var(--panel-border);
-      }
-
-      .infoBlock:last-child {
-        border-bottom: none;
-      }
-
-      .infoTitle {
-        font-weight: 600;
-        margin-bottom: 8px;
-      }
-
-      .infoValue {
-        color: var(--text-light);
-        line-height: 1.6em;
+        from { opacity: 0; }
+        to { opacity: 1; }
       }
 
       footer {
-        padding: 10px;
+        padding: 6px;
         text-align: center;
         color: #718096;
-        font-size: 13px;
+        font-size: 11px;
         border-top: 1px solid var(--panel-border);
         background: white;
+        flex-shrink: 0;
+      }
+
+      /* ==========================================================
+   AJUSTES ESPECÍFICOS PARA IPAD E TELAS DE MENOR RESOLUÇÃO
+   ========================================================== */
+      @media (max-width: 1024px) {
+        main {
+          grid-template-columns: 160px 1fr 160px;
+          gap: 8px;
+          padding: 8px;
+        }
+
+        .layerList {
+          padding: 8px;
+          gap: 6px;
+        }
+
+        .layer {
+          padding: 6px;
+          font-size: 11px;
+        }
+
+        header {
+          padding: 10px 14px;
+        }
+
+        .infoBlock {
+          padding: 6px 10px;
+        }
+
+        .infoTitle {
+          font-size: 10px;
+        }
+
+        .infoValue {
+          font-size: 11px;
+        }
       }
     </style>
   </head>
@@ -574,16 +467,16 @@ PARTE 9: DESTAQUE DE ATOR ATIVO (CLIENTE / SERVIDOR)
           <button id="btnPause" style="display: none">⏸ Pausar</button>
           <button id="btnNext">Próximo ▶</button>
           <button id="btnReset">Reiniciar</button>
-          <!-- NOVO NA PARTE 10: Seletor de Velocidade -->
           <select
             id="selectSpeed"
             title="Velocidade da simulação"
             style="
-              padding: 10px;
-              border-radius: 10px;
+              padding: 8px;
+              border-radius: 8px;
               border: 1px solid var(--panel-border);
               background: white;
               font-weight: 600;
+              font-size: 12px;
               cursor: pointer;
             "
           >
@@ -610,16 +503,14 @@ PARTE 9: DESTAQUE DE ATOR ATIVO (CLIENTE / SERVIDOR)
         <!-- ÁREA CENTRAL -->
         <section id="simulationArea">
           <div id="statusBar">Aguardando início da simulação.</div>
-          <!-- NOVO NA PARTE 10: Barra de Progresso -->
           <div
             id="progressContainer"
             style="
               width: 100%;
-              height: 6px;
+              height: 4px;
               background: #e2e8f0;
-              border-radius: 3px;
+              border-radius: 2px;
               overflow: hidden;
-              margin-top: -12px;
             "
           >
             <div
@@ -651,7 +542,7 @@ PARTE 9: DESTAQUE DE ATOR ATIVO (CLIENTE / SERVIDOR)
           </div>
         </section>
 
-        <!-- PAINEL DE INFORMAÇÕES (AGORA HORIZONTAL/INFERIOR) -->
+        <!-- PAINEL DE INFORMAÇÕES -->
         <aside id="infoPanel" class="panel">
           <div class="infoBlock">
             <div class="infoTitle">Camada Atual</div>
@@ -662,11 +553,9 @@ PARTE 9: DESTAQUE DE ATOR ATIVO (CLIENTE / SERVIDOR)
             <div class="infoValue" id="currentAction">—</div>
           </div>
           <div class="infoBlock" style="flex: 2">
-            <!-- Dá um pouco mais de espaço para a descrição -->
             <div class="infoTitle">Descrição</div>
             <div class="infoValue" id="currentDescription">
-              O simulador mostrará cada etapa do encapsulamento e do
-              desencapsulamento.
+              O simulador mostrará cada etapa do encapsulamento e do desencapsulamento.
             </div>
           </div>
           <div class="infoBlock" style="flex: 1.5">
@@ -682,10 +571,6 @@ PARTE 9: DESTAQUE DE ATOR ATIVO (CLIENTE / SERVIDOR)
     </div>
 
     <script>
-      /* ==========================================================
-         PARTE 3 & 7: MODELO, CONFIGURAÇÃO E CENÁRIO ENRIQUECIDO
-         ========================================================== */
-
       const Simulator = {};
 
       Simulator.Layers = {
@@ -793,7 +678,6 @@ PARTE 9: DESTAQUE DE ATOR ATIVO (CLIENTE / SERVIDOR)
           name: "Navegando na Web (Requisição e Resposta HTTP)",
           initialPayload: "GET /index.html",
           steps: [
-            // --- ETAPA 1: CLIENTE MONTA A MENSAGEM (ENCAPSULAMENTO) ---
             {
               actor: "client",
               action: "encapsulate",
@@ -824,16 +708,12 @@ PARTE 9: DESTAQUE DE ATOR ATIVO (CLIENTE / SERVIDOR)
               layer: "PHY",
               text: "5. Física: O pacote final é transformado em impulsos elétricos ou sinais de luz para sair pelo cabo de rede ou pelo Wi-Fi.",
             },
-
-            // --- ETAPA 2: TRANSMISSÃO IDA ---
             {
               actor: "internet",
               action: "move",
               direction: "right",
               text: "6. Internet: A mensagem viaja pelos cabos, roteadores e antenas da Internet até chegar ao Servidor.",
             },
-
-            // --- ETAPA 3: SERVIDOR ABRE A MENSAGEM (DESENCAPSULAMENTO) ---
             {
               actor: "server",
               action: "decapsulate",
@@ -864,8 +744,6 @@ PARTE 9: DESTAQUE DE ATOR ATIVO (CLIENTE / SERVIDOR)
               layer: "HTTP",
               text: "11. Aplicação: O Servidor finalmente lê a carta original: 'GET /index.html' (O usuário quer o arquivo do site).",
             },
-
-            // --- ETAPA 4: SERVIDOR PROCESSA E MONTA A RESPOSTA ---
             {
               actor: "server",
               action: "resetPayload",
@@ -902,16 +780,12 @@ PARTE 9: DESTAQUE DE ATOR ATIVO (CLIENTE / SERVIDOR)
               layer: "PHY",
               text: "17. Física: O pacote de resposta é convertido em sinais físicos para viajar de volta.",
             },
-
-            // --- ETAPA 5: TRANSMISSÃO VOLTA ---
             {
               actor: "internet",
               action: "move",
               direction: "left",
               text: "18. Internet: A resposta viaja de volta pelo mundo através dos cabos e roteadores até a sua casa.",
             },
-
-            // --- ETAPA 6: CLIENTE RECEBE A RESPOSTA ---
             {
               actor: "client",
               action: "decapsulate",
@@ -1024,10 +898,6 @@ PARTE 9: DESTAQUE DE ATOR ATIVO (CLIENTE / SERVIDOR)
         },
       };
 
-      /* ==========================================================
-         PARTE 4: STATE MACHINE
-         ========================================================== */
-
       Simulator.StateMachine = class {
         constructor(simulator) {
           this.simulator = simulator;
@@ -1061,6 +931,14 @@ PARTE 9: DESTAQUE DE ATOR ATIVO (CLIENTE / SERVIDOR)
           this.pause();
           this.context.currentState = 0;
           this.render();
+        }
+
+        toggle() {
+          if (this.context.playing) {
+            this.pause();
+          } else {
+            this.play();
+          }
         }
 
         play() {
@@ -1118,8 +996,6 @@ PARTE 9: DESTAQUE DE ATOR ATIVO (CLIENTE / SERVIDOR)
 
         speed(ms) {
           this.context.speed = ms;
-
-          // Sincroniza o tempo de animação no CSS (dura 80% do intervalo entre estados)
           const transitionTime = (ms / 1000) * 0.8;
           document.documentElement.style.setProperty(
             "--transition-speed",
@@ -1128,20 +1004,16 @@ PARTE 9: DESTAQUE DE ATOR ATIVO (CLIENTE / SERVIDOR)
         }
       };
 
-      /* ==========================================================
-         PARTE 5 & 6: RENDERIZADOR & MOTOR DE ANIMAÇÕES
-         ========================================================== */
-
       Simulator.Renderer = {
         render(state) {
           this.renderStatusBar(state);
-          this.renderProgressBar(state); // <--- NOVO NA PARTE 10
+          this.renderProgressBar(state);
           this.renderInfoPanel(state);
           this.highlightPointers(state);
-          this.highlightActor(state); // <--- NOVO NA PARTE 9
+          this.highlightActor(state);
           this.renderPacket(state);
           this.handleMovement(state);
-          this.updateButtonStates(); // <--- NOVO NA PARTE 10
+          this.updateButtonStates();
         },
 
         renderStatusBar(state) {
@@ -1158,17 +1030,6 @@ PARTE 9: DESTAQUE DE ATOR ATIVO (CLIENTE / SERVIDOR)
           const activeLayerObj = state.layer
             ? Simulator.Layers[state.layer]
             : null;
-
-          if (activeLayerObj) {
-            elLayer.textContent = activeLayerObj.title
-              ? `${activeLayerObj.title} (${activeLayerObj.protocol})`
-              : activeLayerObj.protocol;
-          } else {
-            elLayer.textContent = "—";
-          }
-
-          //console.log("state.layer =", state.layer);
-          //console.log("activeLayerObj =", activeLayerObj);
 
           if (elLayer)
             elLayer.textContent = activeLayerObj
@@ -1243,8 +1104,6 @@ PARTE 9: DESTAQUE DE ATOR ATIVO (CLIENTE / SERVIDOR)
             }
 
             const header = document.createElement("div");
-
-            //header.className = "layer-header";
             header.className = `layer-header layer-header-${layerObj.id.toLowerCase()}`;
             header.textContent = layerObj.protocol;
             container.appendChild(header);
@@ -1267,30 +1126,27 @@ PARTE 9: DESTAQUE DE ATOR ATIVO (CLIENTE / SERVIDOR)
           const root = Simulator.Utils.byId("packetRoot");
           if (!root) return;
 
-          // Remove classes de posicionamento anteriores
           root.classList.remove("pos-client", "pos-center", "pos-server");
 
-          // Força a posição baseada no Ator do estado atual
           if (state.actor === "internet" || state.action === "move") {
             root.classList.add("pos-center");
           } else if (state.actor === "server") {
             root.classList.add("pos-server");
           } else {
-            // Cliente ou Estado Inicial (idle)
             root.classList.add("pos-client");
           }
         },
-        /* Sincronização de ator ativo */
+
         highlightActor(state) {
           Simulator.Utils.highlightActor(state.actor);
         },
-        /* Atualiza a porcentagem de progresso da barra */
+
         renderProgressBar(state) {
           const progressBar = Simulator.Utils.byId("progressBar");
           if (!progressBar) return;
 
           const totalSteps = Simulator.states.length - 1;
-          const currentStep = state.step + 1; // +1 devido ao estado idle (-1)
+          const currentStep = state.step + 1;
           const percent = Math.max(
             0,
             Math.min(100, (currentStep / totalSteps) * 100),
@@ -1299,7 +1155,6 @@ PARTE 9: DESTAQUE DE ATOR ATIVO (CLIENTE / SERVIDOR)
           progressBar.style.width = `${percent}%`;
         },
 
-        /* Desabilita botões Anterior/Próximo nos limites da simulação */
         updateButtonStates() {
           const currentIndex = Simulator.Context.currentState;
           const maxIndex = Simulator.states.length - 1;
@@ -1312,14 +1167,9 @@ PARTE 9: DESTAQUE DE ATOR ATIVO (CLIENTE / SERVIDOR)
         },
       };
 
-      /* ==========================================================
-         PARTE 8: INTERFACE E EVENTOS
-         ========================================================== */
-
       Simulator.machine = new Simulator.StateMachine(Simulator);
 
       document.addEventListener("DOMContentLoaded", () => {
-        // Vinculando Eventos de Botões
         Simulator.Utils.byId("btnPlay").addEventListener("click", () =>
           Simulator.machine.play(),
         );
@@ -1337,20 +1187,16 @@ PARTE 9: DESTAQUE DE ATOR ATIVO (CLIENTE / SERVIDOR)
         Simulator.Utils.byId("btnReset").addEventListener("click", () =>
           Simulator.machine.reset(),
         );
-        // NOVO NA PARTE 10: Evento de alteração de velocidade
+
         const selectSpeed = Simulator.Utils.byId("selectSpeed");
         if (selectSpeed) {
-          // Aplica a velocidade inicial do select
           Simulator.machine.speed(Number(selectSpeed.value));
-
           selectSpeed.addEventListener("change", (e) => {
             Simulator.machine.speed(Number(e.target.value));
           });
         }
 
-        // NOVO NA PARTE 10: Eventos de Atalhos de Teclado
         document.addEventListener("keydown", (e) => {
-          // Evita acionar atalhos se o usuário estiver em um elemento input/select
           if (
             ["INPUT", "SELECT", "TEXTAREA"].includes(
               document.activeElement.tagName,
@@ -1359,28 +1205,27 @@ PARTE 9: DESTAQUE DE ATOR ATIVO (CLIENTE / SERVIDOR)
             return;
 
           switch (e.key) {
-            case " ": // Barra de espaço
+            case " ":
               e.preventDefault();
               Simulator.machine.toggle();
               break;
-            case "ArrowRight": // Seta Direita
+            case "ArrowRight":
               e.preventDefault();
               Simulator.machine.pause();
               Simulator.machine.next();
               break;
-            case "ArrowLeft": // Seta Esquerda
+            case "ArrowLeft":
               e.preventDefault();
               Simulator.machine.pause();
               Simulator.machine.previous();
               break;
             case "r":
-            case "R": // Tecla R para Reiniciar
+            case "R":
               Simulator.machine.reset();
               break;
           }
         });
 
-        // Renderiza Estado Inicial
         Simulator.machine.render();
       });
     </script>
