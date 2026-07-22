@@ -257,11 +257,33 @@ PARTE 9: DESTAQUE DE ATOR ATIVO (CLIENTE / SERVIDOR)
         box-shadow: var(--shadow);
       }
 
+      /* ==========================================================
+   PARTE DE MOVIMENTO E NUVEM INTERNET (FOTO 1536x1024)
+   ========================================================== */
+
       #internet {
         flex: 1;
         display: flex;
         justify-content: center;
         align-items: center;
+        position: relative;
+        width: 100%;
+        height: 100%;
+      }
+
+      /* Imagem da Nuvem Internet centralizada */
+      #internet::before {
+        content: "";
+        position: absolute;
+        width: 700px; /* Largura expandida para acompanhar a altura */
+        height: 519px; /* Altura aumentada em 50% (346px + 50%) */
+        background-image: url("7c41fd02-edf3-4815-a115-d3892764c74b.png");
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        mix-blend-mode: multiply; /* <--- Faz o fundo branco da foto sumir e mesclar com o simulador */
+        z-index: 1;
+        pointer-events: none;
       }
 
       #packetStage {
@@ -270,8 +292,11 @@ PARTE 9: DESTAQUE DE ATOR ATIVO (CLIENTE / SERVIDOR)
         display: flex;
         justify-content: center;
         align-items: center;
+        position: relative;
+        z-index: 2; /* Garante que o pacote fique por cima da imagem */
       }
 
+      /* POSICIONAMENTOS NO ESPAÇO DA SIMULAÇÃO (ÚNICO E LIMPO) */
       #packetRoot {
         min-width: 240px;
         min-height: 140px;
@@ -279,7 +304,19 @@ PARTE 9: DESTAQUE DE ATOR ATIVO (CLIENTE / SERVIDOR)
         justify-content: center;
         align-items: center;
         position: relative;
-        transition: transform var(--transition-speed) ease-in-out;
+        transition: transform var(--transition-speed, 0.8s) ease-in-out;
+      }
+
+      #packetRoot.pos-client {
+        transform: translateX(-520px) !important;
+      }
+
+      #packetRoot.pos-center {
+        transform: translateX(0px) !important;
+      }
+
+      #packetRoot.pos-server {
+        transform: translateX(520px) !important;
       }
 
       /* ==========================================================
@@ -610,8 +647,8 @@ PARTE 9: DESTAQUE DE ATOR ATIVO (CLIENTE / SERVIDOR)
 
     <script>
       /* ==========================================================
-   PARTE 3 & 7: MODELO, CONFIGURAÇÃO E CENÁRIO ENRIQUECIDO
-   ========================================================== */
+         PARTE 3 & 7: MODELO, CONFIGURAÇÃO E CENÁRIO ENRIQUECIDO
+         ========================================================== */
 
       const Simulator = {};
 
@@ -619,42 +656,42 @@ PARTE 9: DESTAQUE DE ATOR ATIVO (CLIENTE / SERVIDOR)
         HTTP: {
           id: "HTTP",
           protocol: "HTTP",
-          title: "Aplicação",
+          title: "Aplicação (Mensagem)",
           cssClass: "layer-http",
           description:
-            "Define o protocolo de aplicação e os dados transmitidos (Requisição/Resposta).",
+            "É a mensagem original! Funciona como a carta onde o usuário escreve o que quer pedir ou responder (ex: 'Quero ver este site').",
         },
         TCP: {
           id: "TCP",
           protocol: "TCP",
-          title: "Transporte",
+          title: "Transporte (Garantia)",
           cssClass: "layer-tcp",
           description:
-            "Define portas de origem/destino e garante integridade através de controle de fluxo.",
+            "É o envelope de organização! Define os números dos 'apartamentos' (Portas) e garante que a mensagem chegue completa, sem perder nenhum pedaço.",
         },
         IP: {
           id: "IP",
           protocol: "IP",
-          title: "Rede",
+          title: "Rede (Endereço Global)",
           cssClass: "layer-ip",
           description:
-            "Adiciona os endereços de rede lógicos (IP Origem e IP Destino).",
+            "É o envelope com o CEP da Internet! Coloca o Endereço IP de quem enviou e de quem vai receber na rede mundial.",
         },
         ETH: {
           id: "ETH",
           protocol: "Ethernet",
-          title: "Enlace",
+          title: "Enlace (Endereço Local)",
           cssClass: "layer-eth",
           description:
-            "Adiciona os endereços físicos dos adaptadores de rede (MAC Address).",
+            "É o envelope do bairro! Coloca a identificação física (Endereço MAC) da placa de rede para entregar o pacote ao próximo equipamento de perto.",
         },
         PHY: {
           id: "PHY",
-          protocol: "Física",
+          protocol: "Transmissão",
           title: "Física",
           cssClass: "layer-phy",
           description:
-            "Converte os quadros de dados em sinais elétricos ou ópticos para o meio físico.",
+            "É o meio de transporte! Transforma toda a mensagem em impulsos de luz, eletricidade ou ondas de Wi-Fi para viajar pelos cabos ou pelo ar.",
         },
       };
 
@@ -717,146 +754,157 @@ PARTE 9: DESTAQUE DE ATOR ATIVO (CLIENTE / SERVIDOR)
 
       Simulator.Scenarios = {
         HTTP: new Scenario({
-          name: "HTTP Request / Response",
+          name: "Navegando na Web (Requisição e Resposta HTTP)",
           initialPayload: "GET /index.html",
           steps: [
+            // --- ETAPA 1: CLIENTE MONTA A MENSAGEM (ENCAPSULAMENTO) ---
             {
               actor: "client",
               action: "encapsulate",
               layer: "HTTP",
-              text: "Aplicação gera uma requisição 'GET /index.html'.",
+              text: "1. Aplicação: O navegador escreve a carta com o pedido: 'Quero carregar a página index.html'.",
             },
             {
               actor: "client",
               action: "encapsulate",
               layer: "TCP",
-              text: "Transporte anexa a porta de destino 80 (HTTP) e porta de origem randômica (54321).",
+              text: "2. Transporte: Colocamos a carta no 1º Envelope (TCP). Definimos a 'Porta de Destino 80' (porta de entrada do site).",
             },
             {
               actor: "client",
               action: "encapsulate",
               layer: "IP",
-              text: "Rede anexa IP Origem (192.168.1.10) e IP Destino (203.0.113.80).",
+              text: "3. Rede: Colocamos tudo no 2º Envelope (IP). Escrevemos o CEP da Internet: IP de Origem (Seu computador) e IP de Destino (Servidor do site).",
             },
             {
               actor: "client",
               action: "encapsulate",
               layer: "ETH",
-              text: "Enlace anexa MAC Origem (AA:BB:CC) e MAC Destino (DD:EE:FF).",
+              text: "4. Enlace: Colocamos tudo no 3º Envelope (Ethernet). Adicionamos o endereço físico (MAC) da sua placa de rede e do roteador da sua casa.",
             },
             {
               actor: "client",
               action: "encapsulate",
               layer: "PHY",
-              text: "Camada Física codifica o quadro Ethernet em impulsos binários.",
+              text: "5. Física: O pacote final é transformado em impulsos elétricos ou sinais de luz para sair pelo cabo de rede ou pelo Wi-Fi.",
             },
+
+            // --- ETAPA 2: TRANSMISSÃO IDA ---
             {
               actor: "internet",
               action: "move",
               direction: "right",
-              text: "O pacote é transmitido pelos meios físicos da Internet.",
+              text: "6. Internet: A mensagem viaja pelos cabos, roteadores e antenas da Internet até chegar ao Servidor.",
             },
+
+            // --- ETAPA 3: SERVIDOR ABRE A MENSAGEM (DESENCAPSULAMENTO) ---
             {
               actor: "server",
               action: "decapsulate",
               layer: "PHY",
-              text: "Servidor recebe a sinalização física e recria o quadro de dados.",
+              text: "7. Física: A placa de rede do Servidor capta os sinais elétricos/ópticos e reconstrói o pacote de dados.",
             },
             {
               actor: "server",
               action: "decapsulate",
               layer: "ETH",
-              text: "Enlace valida o endereço MAC e remove o cabeçalho Ethernet.",
+              text: "8. Enlace: O Servidor abre o envelope Ethernet, confirma que a mensagem era para ele e joga a embalagem fora.",
             },
             {
               actor: "server",
               action: "decapsulate",
               layer: "IP",
-              text: "Rede valida o IP de destino do Servidor e remove o cabeçalho IP.",
+              text: "9. Rede: O Servidor abre o envelope IP, confirma que o Endereço IP bate com o seu e descarta essa embalagem.",
             },
             {
               actor: "server",
               action: "decapsulate",
               layer: "TCP",
-              text: "Transporte entrega os dados à porta 80 e remove o cabeçalho TCP.",
+              text: "10. Transporte: O Servidor abre o envelope TCP e descobre qual aplicativo interno deve receber o pedido (Porta 80).",
             },
             {
               actor: "server",
               action: "decapsulate",
               layer: "HTTP",
-              text: "Servidor processa a requisição HTTP recebida.",
+              text: "11. Aplicação: O Servidor finalmente lê a carta original: 'GET /index.html' (O usuário quer o arquivo do site).",
             },
+
+            // --- ETAPA 4: SERVIDOR PROCESSA E MONTA A RESPOSTA ---
             {
               actor: "server",
               action: "resetPayload",
               payload: "HTTP/1.1 200 OK",
-              text: "Servidor gera a resposta com status '200 OK'.",
+              text: "12. Servidor: O site encontra o arquivo e prepara a resposta: '200 OK' (Pedido encontrado com sucesso!).",
             },
             {
               actor: "server",
               action: "encapsulate",
               layer: "HTTP",
-              text: "Aplicação encapsula a resposta HTTP nos dados do pacote.",
+              text: "13. Aplicação: O Servidor escreve a carta de resposta contendo o conteúdo da página solicitada.",
             },
             {
               actor: "server",
               action: "encapsulate",
               layer: "TCP",
-              text: "Transporte adiciona a porta de origem 80 e destino 54321.",
+              text: "14. Transporte: Guarda a resposta no Envelope TCP, marcando a porta de retorno para o navegador do cliente.",
             },
             {
               actor: "server",
               action: "encapsulate",
               layer: "IP",
-              text: "Rede inverte a rota: IP Origem (203.0.113.80) e IP Destino (192.168.1.10).",
+              text: "15. Rede: Guarda no Envelope IP, invertendo o remetente e o destinatário (IP Origem: Servidor → IP Destino: Seu Computador).",
             },
             {
               actor: "server",
               action: "encapsulate",
               layer: "ETH",
-              text: "Enlace anexa os endereços físicos de retorno.",
+              text: "16. Enlace: Guarda no Envelope Ethernet para entregar o pacote ao primeiro roteador de saída do Data Center.",
             },
             {
               actor: "server",
               action: "encapsulate",
               layer: "PHY",
-              text: "Camada Física do servidor codifica os dados no meio físico.",
+              text: "17. Física: O pacote de resposta é convertido em sinais físicos para viajar de volta.",
             },
+
+            // --- ETAPA 5: TRANSMISSÃO VOLTA ---
             {
               actor: "internet",
               action: "move",
               direction: "left",
-              text: "A resposta HTTP transita pela rede em direção ao cliente.",
+              text: "18. Internet: A resposta viaja de volta pelo mundo através dos cabos e roteadores até a sua casa.",
             },
+
+            // --- ETAPA 6: CLIENTE RECEBE A RESPOSTA ---
             {
               actor: "client",
               action: "decapsulate",
               layer: "PHY",
-              text: "Placa de rede do cliente recebe os impulsos elétricos.",
+              text: "19. Física: A placa Wi-Fi/Rede do seu computador capta os sinais do ar ou cabo.",
             },
             {
               actor: "client",
               action: "decapsulate",
               layer: "ETH",
-              text: "Enlace do cliente confirma o MAC e descarta o cabeçalho Ethernet.",
+              text: "20. Enlace: Seu computador valida o endereço físico (MAC) e remove o envelope externo.",
             },
             {
               actor: "client",
               action: "decapsulate",
               layer: "IP",
-              text: "Rede valida o IP e descarta o cabeçalho IP.",
+              text: "21. Rede: Seu computador valida o seu Endereço IP e remove o envelope de rede.",
             },
             {
               actor: "client",
               action: "decapsulate",
               layer: "TCP",
-              text: "Transporte direciona para o navegador e remove o cabeçalho TCP.",
+              text: "22. Transporte: O sistema operacional entrega a mensagem para a janela do seu Navegador.",
             },
             {
               actor: "client",
               action: "decapsulate",
               layer: "HTTP",
-              text: "Navegador renderiza a resposta '200 OK' recebida.",
+              text: "23. Aplicação: O navegador lê '200 OK' e desenha a página da Web na sua tela!",
             },
           ],
         }),
@@ -941,8 +989,8 @@ PARTE 9: DESTAQUE DE ATOR ATIVO (CLIENTE / SERVIDOR)
       };
 
       /* ==========================================================
-   PARTE 4: STATE MACHINE
-   ========================================================== */
+         PARTE 4: STATE MACHINE
+         ========================================================== */
 
       Simulator.StateMachine = class {
         constructor(simulator) {
@@ -1045,8 +1093,8 @@ PARTE 9: DESTAQUE DE ATOR ATIVO (CLIENTE / SERVIDOR)
       };
 
       /* ==========================================================
-   PARTE 5 & 6: RENDERIZADOR & MOTOR DE ANIMAÇÕES
-   ========================================================== */
+         PARTE 5 & 6: RENDERIZADOR & MOTOR DE ANIMAÇÕES
+         ========================================================== */
 
       Simulator.Renderer = {
         render(state) {
@@ -1074,6 +1122,17 @@ PARTE 9: DESTAQUE DE ATOR ATIVO (CLIENTE / SERVIDOR)
           const activeLayerObj = state.layer
             ? Simulator.Layers[state.layer]
             : null;
+
+          if (activeLayerObj) {
+            elLayer.textContent = activeLayerObj.title
+              ? `${activeLayerObj.title} (${activeLayerObj.protocol})`
+              : activeLayerObj.protocol;
+          } else {
+            elLayer.textContent = "—";
+          }
+
+          //console.log("state.layer =", state.layer);
+          //console.log("activeLayerObj =", activeLayerObj);
 
           if (elLayer)
             elLayer.textContent = activeLayerObj
@@ -1170,14 +1229,17 @@ PARTE 9: DESTAQUE DE ATOR ATIVO (CLIENTE / SERVIDOR)
           const root = Simulator.Utils.byId("packetRoot");
           if (!root) return;
 
-          root.classList.remove("move-right", "move-left");
+          // Remove classes de posicionamento anteriores
+          root.classList.remove("pos-client", "pos-center", "pos-server");
 
-          if (state.action === "move") {
-            if (state.direction === "right") {
-              root.classList.add("move-right");
-            } else if (state.direction === "left") {
-              root.classList.add("move-left");
-            }
+          // Força a posição baseada no Ator do estado atual
+          if (state.actor === "internet" || state.action === "move") {
+            root.classList.add("pos-center");
+          } else if (state.actor === "server") {
+            root.classList.add("pos-server");
+          } else {
+            // Cliente ou Estado Inicial (idle)
+            root.classList.add("pos-client");
           }
         },
         /* Sincronização de ator ativo */
@@ -1213,8 +1275,8 @@ PARTE 9: DESTAQUE DE ATOR ATIVO (CLIENTE / SERVIDOR)
       };
 
       /* ==========================================================
-   PARTE 8: INTERFACE E EVENTOS
-   ========================================================== */
+         PARTE 8: INTERFACE E EVENTOS
+         ========================================================== */
 
       Simulator.machine = new Simulator.StateMachine(Simulator);
 
