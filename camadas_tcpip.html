@@ -2,7 +2,10 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <title>TCP/IP Simulator v2.0</title>
 
     <style>
@@ -31,7 +34,11 @@
       }
 
       body {
-        font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+        font-family:
+          "Segoe UI",
+          system-ui,
+          -apple-system,
+          sans-serif;
         background: var(--bg);
         color: var(--text);
         height: 100vh;
@@ -117,7 +124,10 @@
       main {
         flex: 1;
         display: grid;
-        grid-template-columns: minmax(180px, 220px) minmax(300px, 1fr) minmax(180px, 220px);
+        grid-template-columns: minmax(180px, 220px) minmax(300px, 1fr) minmax(
+            180px,
+            220px
+          );
         grid-template-rows: 1fr auto;
         grid-template-areas:
           "client simulation server"
@@ -128,9 +138,15 @@
         min-height: 0; /* Impede estouro de flex/grid */
       }
 
-      #clientPanel { grid-area: client; }
-      #simulationArea { grid-area: simulation; }
-      #serverPanel { grid-area: server; }
+      #clientPanel {
+        grid-area: client;
+      }
+      #simulationArea {
+        grid-area: simulation;
+      }
+      #serverPanel {
+        grid-area: server;
+      }
 
       #infoPanel {
         grid-area: info;
@@ -172,7 +188,9 @@
         display: flex;
         flex-direction: column;
         overflow: hidden;
-        transition: box-shadow 0.35s ease, border-color 0.35s ease;
+        transition:
+          box-shadow 0.35s ease,
+          border-color 0.35s ease;
       }
 
       .panelTitle {
@@ -184,16 +202,26 @@
 
       .panel.active-actor-client {
         border-color: var(--client);
-        box-shadow: 0 0 0 3px rgba(43, 108, 176, 0.25), var(--shadow);
+        box-shadow:
+          0 0 0 3px rgba(43, 108, 176, 0.25),
+          var(--shadow);
       }
 
       .panel.active-actor-server {
         border-color: var(--server);
-        box-shadow: 0 0 0 3px rgba(197, 48, 48, 0.25), var(--shadow);
+        box-shadow:
+          0 0 0 3px rgba(197, 48, 48, 0.25),
+          var(--shadow);
       }
 
-      .clientTitle { background: var(--client); color: white; }
-      .serverTitle { background: var(--server); color: white; }
+      .clientTitle {
+        background: var(--client);
+        color: white;
+      }
+      .serverTitle {
+        background: var(--server);
+        color: white;
+      }
 
       .layerList {
         padding: 12px;
@@ -287,27 +315,47 @@
         justify-content: center;
         align-items: center;
         position: relative;
-        transition: transform var(--transition-speed, 0.8s) cubic-bezier(0.4, 0, 0.2, 1);
+        transition: transform var(--transition-speed, 0.8s)
+          cubic-bezier(0.4, 0, 0.2, 1);
         will-change: transform;
       }
 
       /* As posições agora utilizam porcentagem da largura do container do palco */
+      /*
       #packetRoot.pos-client {
         transform: translateX(calc(-50cqw + 50% + 10px)) !important;
+      }
+      */
+
+      /* Recuo ajustado para o pacote NÃO invadir as colunas laterais */
+      #packetRoot.pos-client {
+        transform: translateX(
+          calc(-50cqw + 50% + 40px)
+        ) !important; /* Aumentado de 10px para 40px para dar margem */
       }
 
       #packetRoot.pos-center {
         transform: translateX(0px) !important;
       }
-
+      /*
       #packetRoot.pos-server {
         transform: translateX(calc(50cqw - 50% - 10px)) !important;
+      }
+      */
+      #packetRoot.pos-server {
+        transform: translateX(
+          calc(50cqw - 50% - 40px)
+        ) !important; /* Aumentado de -10px para -40px */
       }
 
       /* Caso cqw não seja totalmente suportado, fallback relativo */
       @supports not (transform: translateX(1cqw)) {
-        #packetRoot.pos-client { transform: translateX(-35vw) !important; }
-        #packetRoot.pos-server { transform: translateX(35vw) !important; }
+        #packetRoot.pos-client {
+          transform: translateX(-35vw) !important;
+        }
+        #packetRoot.pos-server {
+          transform: translateX(35vw) !important;
+        }
       }
 
       #simulationArea {
@@ -315,9 +363,9 @@
       }
 
       /* ==========================================================
-   PACOTE E ENVELOPES RESPONSIVOS (FLUID ENCAPSULATION)
-   ========================================================== */
-
+PACOTE E ENVELOPES RESPONSIVOS (FLUID ENCAPSULATION)
+========================================================== */
+      /*
       .packet-layer {
         display: flex;
         justify-content: center;
@@ -327,41 +375,113 @@
         transition: all var(--transition-speed) ease;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
       }
+      */
+      /* 1. Ativa o Container Query na própria caixinha do envelope */
+      .packet-layer {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative; /* Importante: relativo como no seu original! */
+        border-radius: 8px;
+        transition: all var(--transition-speed) ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 
+        container-type: size; /* Permite que o texto leia a altura da caixa */
+      }
+      /*
       .layer-header {
         position: absolute;
         top: 2px;
-        left: 6px;
-        font-size: 9px;
+        left: 6px;     
+        font-size: clamp(7px, 1.2cqw + 0.5cqh, 10px);
         font-weight: 700;
-        letter-spacing: 0.3px;
+        letter-spacing: 0.2px;
         text-transform: uppercase;
         opacity: 0.95;
         pointer-events: none;
       }
+      */
+      /* 2. Atualize o .layer-header com base na ALTURA da caixinha */
+      .layer-header {
+        position: absolute;
+        top: 1px;
+        left: 4px;
+        /* Calcula a fonte usando a ALTURA da caixa (cqh), baixando até 6px se necessário */
+        font-size: clamp(6px, 18cqh, 10px);
+        line-height: 1;
+        font-weight: 700;
+        letter-spacing: 0.1px;
+        text-transform: uppercase;
+        opacity: 0.95;
+        pointer-events: none;
+        white-space: nowrap;
+      }
 
       /* Escalonamento proporcional com CSS fluid */
-      .layer-size-0 { width: clamp(100px, 18cqw, 140px); height: clamp(36px, 8cqh, 48px); }
-      .layer-size-1 { width: clamp(120px, 22cqw, 170px); height: clamp(52px, 11cqh, 72px); }
-      .layer-size-2 { width: clamp(140px, 26cqw, 200px); height: clamp(68px, 14cqh, 96px); }
-      .layer-size-3 { width: clamp(160px, 30cqw, 235px); height: clamp(84px, 17cqh, 120px); }
-      .layer-size-4 { width: clamp(180px, 34cqw, 270px); height: clamp(100px, 20cqh, 150px); }
-      .layer-size-5 { width: clamp(200px, 38cqw, 310px); height: clamp(116px, 23cqh, 180px); }
+      .layer-size-0 {
+        width: clamp(100px, 18cqw, 140px);
+        height: clamp(36px, 8cqh, 48px);
+      }
+      .layer-size-1 {
+        width: clamp(120px, 22cqw, 170px);
+        height: clamp(52px, 11cqh, 72px);
+      }
+      .layer-size-2 {
+        width: clamp(140px, 26cqw, 200px);
+        height: clamp(68px, 14cqh, 96px);
+      }
+      .layer-size-3 {
+        width: clamp(160px, 30cqw, 235px);
+        height: clamp(84px, 17cqh, 120px);
+      }
+      .layer-size-4 {
+        width: clamp(180px, 34cqw, 270px);
+        height: clamp(100px, 20cqh, 150px);
+      }
+      .layer-size-5 {
+        width: clamp(200px, 38cqw, 310px);
+        height: clamp(116px, 23cqh, 180px);
+      }
 
-      .layer-http { background: #ede9fe; border: 2px solid #7c3aed; }
-      .layer-http > .layer-header { color: #6d28d9; }
+      .layer-http {
+        background: #ede9fe;
+        border: 2px solid #7c3aed;
+      }
+      .layer-http > .layer-header {
+        color: #6d28d9;
+      }
 
-      .layer-tcp { background: #cffafe; border: 2px solid #0891b2; }
-      .layer-tcp > .layer-header { color: #0e7490; }
+      .layer-tcp {
+        background: #cffafe;
+        border: 2px solid #0891b2;
+      }
+      .layer-tcp > .layer-header {
+        color: #0e7490;
+      }
 
-      .layer-ip { background: #dcfce7; border: 2px solid #16a34a; }
-      .layer-ip > .layer-header { color: #166534; }
+      .layer-ip {
+        background: #dcfce7;
+        border: 2px solid #16a34a;
+      }
+      .layer-ip > .layer-header {
+        color: #166534;
+      }
 
-      .layer-eth { background: #fef3c7; border: 2px solid #d97706; }
-      .layer-eth > .layer-header { color: #92400e; }
+      .layer-eth {
+        background: #fef3c7;
+        border: 2px solid #d97706;
+      }
+      .layer-eth > .layer-header {
+        color: #92400e;
+      }
 
-      .layer-phy { background: #fee2e2; border: 2px solid #dc2626; }
-      .layer-phy > .layer-header { color: #991b1b; }
+      .layer-phy {
+        background: #fee2e2;
+        border: 2px solid #dc2626;
+      }
+      .layer-phy > .layer-header {
+        color: #991b1b;
+      }
 
       .packet-data {
         width: clamp(90px, 14cqw, 120px);
@@ -382,7 +502,9 @@
 
       .packet-layer.active {
         transform: scale(1.01);
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25), 0 8px 20px rgba(0, 0, 0, 0.15);
+        box-shadow:
+          0 0 0 3px rgba(59, 130, 246, 0.25),
+          0 8px 20px rgba(0, 0, 0, 0.15);
         z-index: 100;
       }
 
@@ -391,17 +513,31 @@
       }
 
       /* ANIMAÇÕES NATIVAS RESTRITAS */
-      .anim-grow { animation: animGrow 0.4s ease-out; }
-      .anim-fade { animation: animFade 0.4s ease-out; }
+      .anim-grow {
+        animation: animGrow 0.4s ease-out;
+      }
+      .anim-fade {
+        animation: animFade 0.4s ease-out;
+      }
 
       @keyframes animGrow {
-        from { transform: scale(0.6); opacity: 0; }
-        to { transform: scale(1); opacity: 1; }
+        from {
+          transform: scale(0.6);
+          opacity: 0;
+        }
+        to {
+          transform: scale(1);
+          opacity: 1;
+        }
       }
 
       @keyframes animFade {
-        from { opacity: 0; }
-        to { opacity: 1; }
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
       }
 
       footer {
@@ -555,7 +691,8 @@
           <div class="infoBlock" style="flex: 2">
             <div class="infoTitle">Descrição</div>
             <div class="infoValue" id="currentDescription">
-              O simulador mostrará cada etapa do encapsulamento e do desencapsulamento.
+              O simulador mostrará cada etapa do encapsulamento e do
+              desencapsulamento.
             </div>
           </div>
           <div class="infoBlock" style="flex: 1.5">
