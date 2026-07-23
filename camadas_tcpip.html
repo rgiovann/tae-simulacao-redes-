@@ -222,7 +222,7 @@
         background: var(--server);
         color: white;
       }
-
+      /*
       .layerList {
         padding: 12px;
         display: flex;
@@ -241,6 +241,60 @@
         font-weight: 600;
         transition: 0.35s;
         text-align: center;
+      }
+      */
+
+      /* 1. Congela o tamanho da lista de camadas para não mudar com a simulação */
+      .layerList {
+        padding: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        flex: 1;
+        justify-content: flex-start; /* Mudado de space-around para flex-start para não esticar */
+        overflow-y: auto; /* Garante rolagem se a tela for extremamente pequena */
+      }
+
+      /* 2. Mantém os botões das camadas com tamanho compacto e constante */
+      .layer {
+        background: #f8fafc;
+        border: 1px solid #cbd5e0;
+        border-radius: 8px;
+        padding: 6px 8px;
+        font-size: 11px;
+        font-weight: 600;
+        transition: 0.35s;
+        text-align: center;
+        flex-shrink: 0; /* Impede que os botões esmaguem uns aos outros */
+      }
+
+      /* 3. Trava a altura do Main no modo Landscape para Celulares */
+      @media (max-height: 500px) and (orientation: landscape) {
+        main {
+          /* Garante que o grid use 100% da área disponível sem expandir com os elementos internos */
+          grid-template-rows: 1fr auto;
+          align-items: stretch;
+        }
+
+        .panel {
+          height: 100%;
+          max-height: 100%;
+        }
+
+        .panelTitle {
+          padding: 6px 10px;
+          font-size: 13px;
+        }
+
+        .layerList {
+          padding: 6px;
+          gap: 4px;
+        }
+
+        .layer {
+          padding: 4px 6px;
+          font-size: 10px;
+        }
       }
 
       .layer.active {
